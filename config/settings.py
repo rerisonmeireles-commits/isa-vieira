@@ -107,19 +107,33 @@ AUTH_USER_MODEL = "accounts.Usuario"
 # Separar owner (migrações) de app_user (runtime) é o próximo passo:
 # hoje o REVOKE do log de auditoria é decorativo porque o usuário do
 # Django é o dono da tabela. Ver notas no fim do arquivo.
+DATABASE_ROUTERS = ["config.routers.TestDatabaseRouter"]
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env_required("DB_NAME"),
-        "USER": env_required("DB_USER"),
+        "USER": env_required("DB_USER"),          # fisio_app
         "PASSWORD": env_required("DB_PASSWORD"),
         "HOST": env_required("DB_HOST"),
         "PORT": env("DB_PORT", default="5432"),
         "CONN_MAX_AGE": 60,
-        "OPTIONS": {
-            "connect_timeout": 10,
+        "OPTIONS": {"connect_timeout": 10},
+        "TEST": {
+            "USER": env_required("DB_OWNER_USER"),
+            "PASSWORD": env_required("DB_OWNER_PASSWORD"),
+            "NAME": "test_db_fisio",
         },
-    }
+    },
+    "migrations": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env_required("DB_NAME"),
+        "USER": env_required("DB_OWNER_USER"),
+        "PASSWORD": env_required("DB_OWNER_PASSWORD"),
+        "HOST": env_required("DB_HOST"),
+        "PORT": env("DB_PORT", default="5432"),
+        "OPTIONS": {"connect_timeout": 10},
+    },
 }
 
 LANGUAGE_CODE = "pt-br"
