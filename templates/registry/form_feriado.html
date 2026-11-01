@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{% if feriado %}Editar feriado{% else %}Novo feriado{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if feriado %}Editar feriado{% else %}Novo feriado{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card card-kpi mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.data.id_for_label }}">Data *</label>
+          {{ form.data }}{{ form.data.errors }}
+        </div>
+        <div class="col-md-8">
+          <label class="form-label" for="{{ form.descricao.id_for_label }}">Descrição *</label>
+          {{ form.descricao }}{{ form.descricao.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.tipo.id_for_label }}">Tipo *</label>
+          {{ form.tipo }}{{ form.tipo.errors }}
+        </div>
+        <div class="col-md-4" id="campo-uf">
+          <label class="form-label" for="{{ form.uf.id_for_label }}">UF</label>
+          {{ form.uf }}{{ form.uf.errors }}
+        </div>
+        <div class="col-md-4" id="campo-municipio">
+          <label class="form-label" for="{{ form.municipio.id_for_label }}">Município</label>
+          {{ form.municipio }}{{ form.municipio.errors }}
+        </div>
+        <div class="col-md-4">
+          <div class="form-check mt-4">
+            {{ form.recorrente }}
+            <label class="form-check-label" for="{{ form.recorrente.id_for_label }}">
+              Recorrente (repete todo ano)
+            </label>
+          </div>
+          <div class="form-text">Ex.: 01/01 Ano Novo - vale para todos os anos.</div>
+          {{ form.recorrente.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'registry:listar_feriados' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var tipo = document.getElementById("{{ form.tipo.id_for_label }}");
+  var campoUf = document.getElementById("campo-uf");
+  var campoMunicipio = document.getElementById("campo-municipio");
+  function atualizar() {
+    var v = tipo.value;
+    campoUf.style.display = (v === "NACIONAL") ? "none" : "";
+    campoMunicipio.style.display = (v === "MUNICIPAL") ? "" : "none";
+  }
+  tipo.addEventListener("change", atualizar);
+  atualizar();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+<h1 class="h4 mb-3">Minha evolução</h1>
+{% for e in evolucoes %}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between">
+      <span class="fw-semibold">{{ e.data|date:"d/m/Y" }}</span>
+      {% if e.profissional %}<span class="small text-muted">{{ e.profissional }}</span>{% endif %}
+    </div>
+    <p class="mb-0 mt-2" style="white-space: pre-line;">{{ e }}</p>
+  </div>
+</div>
+{% empty %}
+<div class="text-center text-muted py-4">Nenhuma evolução registrada.</div>
+{% endfor %}
+{% endblock %}

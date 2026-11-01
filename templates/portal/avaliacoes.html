@@ -1,0 +1,79 @@
+{# templates/portal/avaliacoes.html                                              #}
+{# Lista de avaliações do PACIENTE. A view entrega apenas status=LIBERADA,       #}
+{# então todo item aqui é liberado — não há badge de status a renderizar.       #}
+{# O laudo técnico completo fica em templates/clinical/avaliacao_detalhe.html.  #}
+
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Minhas avaliações{% endblock %}
+{% block page_title %}Minhas avaliações{% endblock %}
+
+{% block content %}
+
+{% if avaliacoes %}
+<p class="text-muted small mb-3">
+  <i class="bi bi-clipboard2-pulse"></i>
+  {{ avaliacoes|length }}
+  avalia{{ avaliacoes|length|pluralize:"ção,ções" }}
+  liberada{{ avaliacoes|length|pluralize }}
+</p>
+{% endif %}
+
+<div class="row g-2">
+
+  {% for av in avaliacoes %}
+  <div class="col-12">
+    <a href="{% url 'portal:avaliacao_detalhe' av.uuid %}"
+       class="card text-decoration-none shadow-sm h-100">
+      <div class="card-body py-3">
+
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="flex-grow-1">
+            <div class="fw-semibold text-dark mb-1">
+              {{ av.get_tipo_display|default:"Avaliação fisioterapêutica" }}
+            </div>
+            <div class="text-muted small">
+              <i class="bi bi-calendar3"></i> {{ av.data|date:"d/m/Y" }}
+              {% if av.profissional %}
+                <span class="mx-1">·</span>
+                <i class="bi bi-person-badge"></i> {{ av.profissional }}
+              {% endif %}
+            </div>
+          </div>
+          <i class="bi bi-chevron-right text-muted mt-1"></i>
+        </div>
+
+        {% if av.queixa_principal %}
+        <p class="text-muted small mb-0 mt-2">
+          {{ av.queixa_principal|truncatewords:18 }}
+        </p>
+        {% endif %}
+
+        {% if av.escalas_eva_dor %}
+        <span class="badge text-bg-light border mt-2 fw-normal">
+          <i class="bi bi-activity"></i> EVA {{ av.escalas_eva_dor }}
+        </span>
+        {% endif %}
+
+      </div>
+    </a>
+  </div>
+
+  {% empty %}
+  <div class="col-12 text-center py-5">
+    <i class="bi bi-clipboard2-x display-6 text-muted"></i>
+    <p class="text-muted mt-3 mb-1">Nenhuma avaliação liberada ainda.</p>
+    <p class="text-muted small mb-0">
+      Suas avaliações aparecem aqui depois que o fisioterapeuta as libera.
+    </p>
+  </div>
+  {% endfor %}
+
+</div>
+
+<p class="text-muted small mt-4 mb-0">
+  <i class="bi bi-info-circle"></i>
+  Em caso de dúvida sobre uma avaliação, entre em contato com a clínica.
+</p>
+
+{% endblock %}

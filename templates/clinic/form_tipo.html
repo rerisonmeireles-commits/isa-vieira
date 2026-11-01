@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{% if tipo %}Editar tipo{% else %}Novo tipo{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if tipo %}Editar tipo de atendimento{% else %}Novo tipo de atendimento{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card card-kpi mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.nome.id_for_label }}">Nome *</label>
+          {{ form.nome }}{{ form.nome.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.duracao_minutos.id_for_label }}">Duração (min) *</label>
+          {{ form.duracao_minutos }}{{ form.duracao_minutos.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.valor_padrao.id_for_label }}">Valor padrão</label>
+          {{ form.valor_padrao }}{{ form.valor_padrao.errors }}
+        </div>
+        <div class="col-md-9">
+          <label class="form-label" for="{{ form.descricao.id_for_label }}">Descrição</label>
+          {{ form.descricao }}{{ form.descricao.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.cor.id_for_label }}">Cor (agenda)</label>
+          {{ form.cor }}{{ form.cor.errors }}
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            {{ form.ativo }}
+            <label class="form-check-label" for="{{ form.ativo.id_for_label }}">Tipo ativo</label>
+          </div>
+          {{ form.ativo.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'clinica:listar_tipos' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

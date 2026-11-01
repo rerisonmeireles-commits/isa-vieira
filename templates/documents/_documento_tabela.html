@@ -1,0 +1,76 @@
+{% with escopo=paciente_escopo|default:"" %}
+{% if request.META.HTTP_HX_REQUEST %}
+  <div id="messages-container" hx-swap-oob="true">
+    {% include "_messages.html" %}
+  </div>
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-secondary">
+      <tr>
+        <th>Título</th>
+        {% if not escopo %}<th>Paciente</th>{% endif %}
+        <th>Tipo</th>
+        <th>Emissão</th>
+        <th>Profissional</th>
+        <th class="text-center">Paciente vê?</th>
+        <th class="text-end">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for doc in documentos %}
+        <tr>
+          <td class="fw-semibold">{{ doc.titulo }}</td>
+          {% if not escopo %}<td>{{ doc.paciente.nome_completo }}</td>{% endif %}
+          <td>{{ doc.get_tipo_display }}</td>
+          <td>{{ doc.data_emissao|date:"d/m/Y"|default:"-" }}</td>
+          <td>{{ doc.profissional.nome_completo|default:"-" }}</td>
+          <td class="text-center">{% if doc.visivel_paciente %}✓{% else %}-{% endif %}</td>
+          <td class="text-end">
+            <div class="d-flex flex-nowrap justify-content-end align-items-center gap-1">
+
+              <!-- Botão Baixar -->
+              <a href="{% url 'documents:documento_download' doc.uuid %}"
+                class="btn btn-md btn-claro-primary" title="Baixar documento"> 
+                <i class="bi bi-cloud-download"></i>
+              </a>
+
+              {% if pode_gerenciar %}
+
+                <!-- Botão Editar -->
+                <button type="button"
+                        class="btn btn-md btn-claro-primary"
+                        hx-get="{% url 'documents:documento_editar' doc.id %}{% if escopo %}?paciente={{ escopo }}{% endif %}"
+                        hx-target="#modal-documento-dialog"
+                        hx-swap="innerHTML"
+                        hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-documento')).show()">
+                  <i class="bi bi-pencil"></i>
+                </button>
+
+                <!-- Botão Excluir -->
+                <form method="post" class="d-inline m-0 p-0">
+                  {% csrf_token %}
+
+                  <button type="submit"
+                          class="btn btn-md btn-claro-danger"
+                          hx-post="{% url 'documents:documento_excluir' doc.id %}{% if escopo %}?paciente={{ escopo }}{% endif %}"
+                          hx-confirm="Excluir o documento '{{ doc.titulo }}'?"
+                          hx-target="#documentos-container"
+                          hx-swap="innerHTML">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+
+              {% endif %}
+
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="{% if escopo %}6{% else %}7{% endif %}" class="text-center text-muted py-4">Nenhum documento encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endwith %}

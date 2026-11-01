@@ -1,0 +1,19 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+<h1 class="h4 mb-3">Contato com a equipe</h1>
+<form method="post" class="card card-body" novalidate>
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label">Destinatário</label>
+    <select name="destinatario" class="form-select" required>
+      <option value="">Selecione…</option>
+      {% for p in profissionais %}<option value="{{ p.pk }}">{{ p.nome_completo }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Mensagem</label>
+    <textarea name="corpo" class="form-control" rows="4" required></textarea>
+  </div>
+  <button type="submit" class="btn btn-claro-primary">Enviar</button>
+</form>
+{% endblock %}

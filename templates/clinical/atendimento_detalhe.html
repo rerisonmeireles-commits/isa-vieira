@@ -1,0 +1,20 @@
+{% if atendimento.evolucoes.exists %}
+<hr class="my-3">
+<h6 class="text-muted text-uppercase small"><i class="bi bi-journal-medical"></i> Evoluções desta sessão</h6>
+<table class="table table-sm">
+  <thead><tr><th>#</th><th>Registrada em</th><th>Profissional</th><th class="text-end"></th></tr></thead>
+  <tbody>
+  {% for ev in atendimento.evolucoes.all %}
+    <tr>
+      <td>{{ ev.pk }}</td>
+      <td>{{ ev.created_at|date:"d/m/Y H:i" }}</td>
+      <td>{{ ev.profissional }}</td>
+      <td class="text-end">
+        <a href="{% url 'clinical:detalhe_evolucao' ev.pk %}"
+           class="btn btn-sm btn-outline-primary">Abrir</a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}

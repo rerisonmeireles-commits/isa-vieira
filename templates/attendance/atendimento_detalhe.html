@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Atendimento #{{ atendimento.pk }}{% endblock %}
+{% block page_title %}Atendimento #{{ atendimento.pk }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <div>
+      <i class="bi bi-calendar2-check"></i>
+      <span class="badge {% if atendimento.status == 'CONCLUIDO' %}text-bg-success{% elif atendimento.status == 'EM_ANDAMENTO' %}text-bg-primary{% elif atendimento.status == 'NAO_REALIZADO' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
+        {{ atendimento.get_status_display }}
+      </span>
+    </div>
+    <a href="{% url 'attendance:lista_atendimentos' %}"
+       class="btn btn-outline-secondary btn-sm">Voltar</a>
+  </div>
+
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6"><strong>Paciente:</strong> {{ atendimento.paciente }}</div>
+      <div class="col-md-6"><strong>Profissional:</strong> {{ atendimento.profissional }}</div>
+      <div class="col-md-4"><strong>Tipo:</strong> {{ atendimento.tipo_atendimento }}</div>
+      <div class="col-md-4"><strong>Sala:</strong> {{ atendimento.sala|default:"—" }}</div>
+      <div class="col-md-4"><strong>Agendamento:</strong> #{{ atendimento.agendamento_id }}</div>
+      <div class="col-md-6"><strong>Início:</strong> {{ atendimento.data_inicio|date:"d/m/Y H:i"|default:"—" }}</div>
+      <div class="col-md-6"><strong>Fim:</strong> {{ atendimento.data_fim|date:"d/m/Y H:i"|default:"—" }}</div>
+      <div class="col-12"><strong>Observações:</strong><p class="mb-0">{{ atendimento.observacoes|default:"—" }}</p></div>
+    </div>
+
+    {% if atendimento.status == 'EM_ANDAMENTO' %}
+    <hr class="my-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <a href="{% url 'clinical:nova_evolucao' atendimento.paciente_id %}"
+           class="btn btn-outline-primary">
+          <i class="bi bi-journal-medical"></i> Nova Evolução
+        </a>
+      </div>
+      <div class="col-md-6">
+        <form method="post" action="{% url 'attendance:checkout_atendimento' atendimento.pk %}"
+              class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-8">
+            <label class="form-label">Observações do check-out</label>
+            <textarea name="observacoes" rows="2" class="form-control"></textarea>
+          </div>
+          <div class="col-4">
+            <button type="submit" class="btn btn-success w-100"
+                    onclick="return confirm('Finalizar este atendimento?')">
+              <i class="bi bi-check-lg"></i> Finalizar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if atendimento.evolucoes.exists %}
+    <hr class="my-3">
+    <h6 class="text-muted text-uppercase small"><i class="bi bi-journal-medical"></i> Evoluções desta sessão</h6>
+    <table class="table table-sm">
+      <thead><tr><th>#</th><th>Registrada em</th><th>Profissional</th><th class="text-end"></th></tr></thead>
+      <tbody>
+      {% for ev in atendimento.evolucoes.all %}
+        <tr>
+          <td>{{ ev.pk }}</td>
+          <td>{{ ev.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{{ ev.profissional }}</td>
+          <td class="text-end">
+            <a href="{% url 'clinical:detalhe_evolucao' ev.pk %}"
+               class="btn btn-sm btn-outline-primary">Abrir</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

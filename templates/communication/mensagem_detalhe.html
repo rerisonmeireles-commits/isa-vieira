@@ -1,0 +1,28 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">{{ mensagem.assunto|default:"(sem assunto)" }}</span>
+    <a href="{% url 'communication:inbox' %}" class="btn btn-sm btn-outline-secondary">Voltar</a>
+  </div>
+  <div class="card-body">
+    <div class="small text-muted mb-3">
+      De: {{ mensagem.remetente|default:"Sistema" }} · Para: {{ mensagem.destinatario|default:"—" }}
+      · {{ mensagem.data_envio|date:"d/m/Y H:i" }} · {{ mensagem.get_status_display }}
+      {% if mensagem.paciente %} · Paciente: {{ mensagem.paciente }}{% endif %}
+    </div>
+    <p class="mb-0" style="white-space: pre-line;">{{ mensagem.corpo }}</p>
+  </div>
+  <div class="card-footer bg-white">
+    {% if mensagem.remetente_id != request.user.pk and mensagem.remetente %}
+      <a href="{% url 'communication:mensagem_responder' mensagem.pk %}" class="btn btn-sm btn-claro-primary">
+        <i class="bi bi-reply"></i> Responder
+      </a>
+    {% elif mensagem.destinatario_id != request.user.pk and mensagem.destinatario %}
+      <a href="{% url 'communication:mensagem_responder' mensagem.pk %}" class="btn btn-sm btn-claro-primary">
+        <i class="bi bi-reply"></i> Responder
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

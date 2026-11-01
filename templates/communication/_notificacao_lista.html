@@ -1,0 +1,37 @@
+﻿{% if request.META.HTTP_HX_REQUEST %}
+  <div id="messages-container" hx-swap-oob="true">
+    {% include "_messages.html" %}
+  </div>
+{% endif %}
+
+<div class="list-group">
+  {% for n in notificacoes %}
+    <div class="list-group-item d-flex justify-content-between align-items-start {% if not n.lida %}fw-semibold{% endif %}">
+      <div class="me-2">
+        <div>
+          {% if not n.lida %}<span class="badge text-bg-primary me-1">Nova</span>{% endif %}
+          {{ n.titulo }}
+          <span class="badge text-bg-secondary ms-1">{{ n.get_tipo_display }}</span>
+        </div>
+        <div class="small text-muted">{{ n.mensagem }}</div>
+        <div class="small text-muted">{{ n.created_at|date:"d/m/Y H:i" }}</div>
+      </div>
+      <div class="text-end">
+        {% if n.link_url %}
+          <a href="{{ n.link_url }}" class="btn btn-sm btn-outline-secondary me-1">Abrir</a>
+        {% endif %}
+        {% if not n.lida %}
+          <button class="btn btn-sm btn-outline-primary"
+                  hx-post="{% url 'communication:notificacao_ler' n.pk %}"
+                  hx-target="#lista-notificacoes" hx-swap="innerHTML">
+            <i class="bi bi-check2"></i> Marcar lida
+          </button>
+        {% else %}
+          <span class="small text-muted">Lida{% if n.data_lida %} em {{ n.data_lida|date:"d/m/Y H:i" }}{% endif %}</span>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="text-center text-muted py-4">Nenhuma notificação.</div>
+  {% endfor %}
+</div>

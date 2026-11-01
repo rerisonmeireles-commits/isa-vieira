@@ -1,0 +1,31 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+<div class="mb-3">
+  <span class="badge text-bg-secondary">Passo 3 de 3</span>
+  <h1 class="h4 mt-2 mb-1">Escolha a data e o horário</h1>
+  <p class="text-muted small mb-0">
+    {{ tipo.nome }} com {{ profissional.nome_completo }} ·
+    <a href="{% url 'portal:agendar_profissional' tipo.pk %}" class="text-decoration-none">trocar</a>
+  </p>
+</div>
+
+<h2 class="h6 text-muted text-uppercase mb-2">Datas disponíveis</h2>
+<div class="d-flex flex-wrap gap-2 mb-4">
+  {% for d in dias %}
+    <button type="button"
+            class="btn btn-sm {% if d.data == data_selecionada %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+            {% if not d.total %}disabled{% endif %}
+            hx-get="{% url 'portal:agendar_slots' tipo.pk profissional.pk d.data|date:'Y-m-d' %}"
+            hx-target="#slots"
+            hx-swap="innerHTML">
+      <span class="d-block fw-semibold">{{ d.data|date:"d" }}</span>
+      <span class="d-block" style="font-size:.65rem;">{{ d.data|date:"D" }}</span>
+    </button>
+  {% endfor %}
+</div>
+
+<h2 class="h6 text-muted text-uppercase mb-2">Horários livres</h2>
+<div id="slots">
+  {% include "portal/_slots.html" with tipo_id=tipo.pk %}
+</div>
+{% endblock %}

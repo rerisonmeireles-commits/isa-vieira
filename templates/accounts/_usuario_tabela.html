@@ -1,0 +1,51 @@
+{% if request.META.HTTP_HX_REQUEST %}
+  <div id="messages-container" hx-swap-oob="true">
+    {% include "_messages.html" %}
+  </div>
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Nome</th>
+        <th>Usuário</th>
+        <th>E-mail</th>
+        <th>Perfis</th>
+        <th class="text-center">Situação</th>
+        <th class="text-end">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in usuarios %}
+        <tr {% if not u.is_active %}class="text-muted"{% endif %}>
+          <td class="fw-semibold">{{ u.get_full_name|default:u.username }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.groups.all|join:", "|default:"-" }}</td>
+          <td class="text-center">
+            {% if u.is_active %}
+              <span class="badge text-bg-success">Ativo</span>
+            {% else %}
+              <span class="badge text-bg-secondary">Inativo</span>
+            {% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            <button class="btn btn-md btn-claro-primary"
+                    hx-get="{% url 'conta:usuario_editar' u.id %}"
+                    hx-target="#modal-usuario-dialog" hx-swap="innerHTML"
+                    hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-usuario')).show()"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-md btn-claro-{{ u.is_active|yesno:'danger,success' }}"
+                    hx-post="{% url 'conta:usuario_alternar_status' u.id %}"
+                    hx-confirm="{% if u.is_active %}Desativar{% else %}Ativar{% endif %} o usuário '{{ u }}'?"
+                    hx-target="#usuarios-container" hx-swap="innerHTML">
+              {% if u.is_active %}<i class="bi bi-lock"></i>{% else %}<i class="bi bi-check-lg"></i>{% endif %}
+            </button>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">Nenhum usuário cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,37 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0"><i class="bi bi-envelope me-2"></i>Mensagens</h1>
+  <a href="{% url 'communication:mensagem_nova' %}" class="btn btn-claro-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Nova mensagem
+  </a>
+</div>
+
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if caixa == 'recebidas' %}active{% endif %}" href="?caixa=recebidas">Recebidas</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if caixa == 'enviadas' %}active{% endif %}" href="?caixa=enviadas">Enviadas</a>
+  </li>
+</ul>
+
+<div class="list-group">
+  {% for m in mensagens %}
+    <a href="{% url 'communication:mensagem_detalhe' m.pk %}"
+       class="list-group-item list-group-item-action {% if caixa == 'recebidas' and not m.data_leitura %}fw-semibold{% endif %}">
+      <div class="d-flex justify-content-between">
+        <span>{{ m.assunto|default:"(sem assunto)" }}</span>
+        <span class="small text-muted">{{ m.data_envio|date:"d/m/Y H:i" }}</span>
+      </div>
+      <div class="small text-muted">
+        {% if caixa == 'recebidas' %}De: {{ m.remetente|default:"Sistema" }}{% else %}Para: {{ m.destinatario }}{% endif %}
+        {% if m.paciente %} · Paciente: {{ m.paciente }}{% endif %}
+        · {{ m.get_canal_display }} · {{ m.get_status_display }}
+      </div>
+    </a>
+  {% empty %}
+    <div class="text-center text-muted py-4">Nenhuma mensagem.</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Especialidades - Clínica Fisio{% endblock %}
+{% block page_title %}Especialidades{% endblock %}
+
+{% block content %}
+<div class="card card-kpi mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label small text-muted mb-1">Buscar por nome ou descrição</label>
+        <input type="text" name="q" value="{{ busca }}" class="form-control" placeholder="Ex.: Ortopedia">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Situação</label>
+        <select name="ativa" class="form-select">
+          <option value="">Todas</option>
+          <option value="1" {% if ativa_filtro == '1' %}selected{% endif %}>Ativas</option>
+          <option value="0" {% if ativa_filtro == '0' %}selected{% endif %}>Inativas</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-primary flex-grow-1"><i class="bi bi-search"></i> Filtrar</button>
+        <a href="{% url 'registry:listar_especialidades' %}" class="btn btn-outline-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">{{ total }} especialidade{{ total|pluralize }}{% if busca %} · busca "{{ busca }}"{% endif %}</span>
+    <a href="{% url 'registry:criar_especialidade' %}" class="btn btn-sm btn-outline-primary border-0">
+      <i class="bi bi-plus-lg"></i> <b>Nova especialidade</b>
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Situação</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in pagina %}
+          <tr>
+            <td class="fw-semibold">{{ e.nome }}</td>
+            <td class="text-muted small">{{ e.descricao|default:"" }}</td>
+            <td>
+              <span class="badge {% if e.ativa %}badge-success{% else %}badge-secondary{% endif %}">
+                {% if e.ativa %}Ativa{% else %}Inativa{% endif %}
+              </span>
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'registry:editar_especialidade' e.pk %}" class="btn btn-md btn-claro-primary" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post" action="{% url 'registry:alternar_ativa' e.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-md btn-claro-danger"
+                        title="{% if e.ativa %}Inativar{% else %}Reativar{% endif %}"> 
+                  <i class="bi {% if e.ativa %}bi-toggle-off{% else %}bi-toggle-on{% endif %}"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">Nenhuma especialidade encontrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagina.paginator.num_pages > 1 %}
+    <div class="card-footer bg-white">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+          {% if pagina.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ pagina.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+          {% endif %}
+          <li class="page-item disabled">
+            <span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+          </li>
+          {% if pagina.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ pagina.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Próxima</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

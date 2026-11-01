@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Documentos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Documentos</h1>
+  <button class="btn btn-outline-primary btn-sm border-0"
+          hx-get="{% url 'documents:documento_criar' %}"
+          hx-target="#modal-documento-dialog" hx-swap="innerHTML"
+          hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-documento')).show()">
+    <i class="bi bi-plus-lg"></i> <b>Novo documento</b>
+  </button>
+</div>
+
+<form class="row g-2 mb-3"
+      hx-get="{% url 'documents:documento_lista' %}"
+      hx-target="#documentos-container" hx-swap="innerHTML">
+  <div class="col-md-4">
+    <input type="text" name="q" value="{{ request.GET.q|default:'' }}"
+           class="form-control form-control-sm" placeholder="Buscar por título...">
+  </div>
+  <div class="col-md-3">
+    <select name="tipo" class="form-select form-select-sm">
+      <option value="">Todos os tipos</option>
+      {% for valor, rotulo in documentos.0.Tipo.choices %}
+        <option value="{{ valor }}" {% if request.GET.tipo == valor %}selected{% endif %}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="paciente" class="form-select form-select-sm">
+      <option value="">Todos os pacientes</option>
+      {% for p in pacientes %}
+        <option value="{{ p.id }}" {% if request.GET.paciente == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nome_completo }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-outline-secondary btn-sm w-100">Filtrar</button>
+  </div>
+</form>
+
+<div id="documentos-container">
+  {% include "documents/_documento_tabela.html" %}
+</div>
+
+<div class="modal fade" id="modal-documento" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered" id="modal-documento-dialog"></div>
+</div>
+{% endblock %}

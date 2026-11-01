@@ -1,0 +1,48 @@
+{% if oob %}<div id="modal-consentimento-dialog" hx-swap-oob="innerHTML">{% endif %}
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Registrar consentimento</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+  </div>
+  <form hx-post="{% url 'conta:consentimento_criar' %}"
+        hx-target="#consentimentos-container" hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.xhr.getResponseHeader('X-Consent-OK')){ bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-consentimento')).hide(); }">
+    {% csrf_token %}
+    <div class="modal-body">
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2">{% for erro in form.non_field_errors %}{{ erro }} {% endfor %}</div>
+      {% endif %}
+      <div class="row g-2">
+        <div class="col-12">
+          <label class="form-label small mb-1">Paciente *</label>
+          {{ form.paciente }}
+          {% for erro in form.paciente.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Versão do termo *</label>
+          {{ form.versao_termo }}
+          {% for erro in form.versao_termo.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Canal</label>
+          {{ form.canal }}
+        </div>
+        <div class="col-md-6">
+          <div class="form-check">
+            {{ form.aceito }}
+            <label class="form-check-label small">{{ form.aceito.label }}</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">IP de origem</label>
+          {{ form.ip_origem }}
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+  </form>
+</div>
+{% if oob %}</div>{% endif %}

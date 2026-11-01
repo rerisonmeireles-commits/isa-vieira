@@ -1,0 +1,117 @@
+{# templates/portal/avaliacao_detalhe.html                                        #}
+{# Visão do PACIENTE. O laudo técnico completo fica em                            #}
+{# templates/clinical/avaliacao_detalhe.html — não mescle os dois.                #}
+{# A view já garante paciente=request.paciente e status=Avaliacao.Status.LIBERADA, #}
+{# então este template nunca recebe avaliação Pendente nem Inativada.             #}
+
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Avaliação de {{ avaliacao.data|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}Avaliação{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'portal:avaliacoes' %}" class="btn btn-outline-secondary btn-sm border-0">
+    <i class="bi bi-arrow-left"></i> Voltar para minhas avaliações
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title mb-2">
+      <i class="bi bi-clipboard2-pulse text-primary"></i>
+      {{ avaliacao.get_tipo_display|default:"Avaliação fisioterapêutica" }}
+    </h5>
+    <p class="text-muted small mb-0">
+      <i class="bi bi-calendar3"></i> {{ avaliacao.data|date:"d/m/Y" }}
+      {% if avaliacao.profissional %}
+        <span class="mx-2">·</span>
+        <i class="bi bi-person-badge"></i> {{ avaliacao.profissional }}
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{% if avaliacao.queixa_principal %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted small fw-semibold mb-2">Queixa principal</h6>
+    <div class="mb-0">{{ avaliacao.queixa_principal|linebreaks }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if avaliacao.escalas_eva_dor %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted small fw-semibold mb-2">Intensidade da dor</h6>
+    <p class="mb-0">
+      <i class="bi bi-activity"></i>
+      Escala EVA: <strong>{{ avaliacao.escalas_eva_dor }}</strong>
+    </p>
+  </div>
+</div>
+{% endif %}
+
+{% if avaliacao.conduta or avaliacao.plano_terapeutico %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted small fw-semibold mb-3">Plano de tratamento</h6>
+
+    {% if avaliacao.conduta %}
+    <div class="mb-3">
+      <p class="text-muted small mb-1">Conduta</p>
+      <div class="mb-0">{{ avaliacao.conduta|linebreaks }}</div>
+    </div>
+    {% endif %}
+
+    {% if avaliacao.plano_terapeutico %}
+    <div>
+      <p class="text-muted small mb-1">Plano terapêutico</p>
+      <div class="mb-0">{{ avaliacao.plano_terapeutico|linebreaks }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if avaliacao.objetivo_curto_prazo or avaliacao.objetivo_longo_prazo %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted small fw-semibold mb-3">Objetivos</h6>
+
+    {% if avaliacao.objetivo_curto_prazo %}
+    <div class="mb-3">
+      <p class="text-muted small mb-1">
+        <i class="bi bi-flag"></i> Curto prazo
+      </p>
+      <div class="mb-0">{{ avaliacao.objetivo_curto_prazo|linebreaks }}</div>
+    </div>
+    {% endif %}
+
+    {% if avaliacao.objetivo_longo_prazo %}
+    <div>
+      <p class="text-muted small mb-1">
+        <i class="bi bi-signpost-split"></i> Longo prazo
+      </p>
+      <div class="mb-0">{{ avaliacao.objetivo_longo_prazo|linebreaks }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if avaliacao.observacoes %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted small fw-semibold mb-2">Observações</h6>
+    <div class="mb-0">{{ avaliacao.observacoes|linebreaks }}</div>
+  </div>
+</div>
+{% endif %}
+
+<p class="text-muted small mt-4 mb-0">
+  <i class="bi bi-info-circle"></i>
+  Em caso de dúvida sobre esta avaliação, entre em contato com a clínica.
+</p>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{% if profissional %}Editar profissional{% else %}Novo profissional{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if profissional %}Editar profissional{% else %}Novo profissional{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="card card-kpi mb-3">
+    <div class="card-header bg-white fw-semibold">Dados profissionais</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.nome_completo.id_for_label }}">Nome completo *</label>
+          {{ form.nome_completo }}{{ form.nome_completo.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.registro_conselho.id_for_label }}">Registro no conselho *</label>
+          {{ form.registro_conselho }}{{ form.registro_conselho.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.conselho.id_for_label }}">Conselho *</label>
+          {{ form.conselho }}{{ form.conselho.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.cpf.id_for_label }}">CPF</label>
+          {{ form.cpf }}{{ form.cpf.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.data_admissao.id_for_label }}">Data de admissão</label>
+          {{ form.data_admissao }}{{ form.data_admissao.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}{{ form.status.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.cor_agenda.id_for_label }}">Cor na agenda</label>
+          {{ form.cor_agenda }}{{ form.cor_agenda.errors }}
+        </div>
+        <div class="col-md-12">
+          <label class="form-label" for="{{ form.foto.id_for_label }}">Foto</label>
+          {{ form.foto }}{{ form.foto.errors }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Especialidades</label>
+          <div class="row">
+            {% for checkbox in form.especialidades %}
+              <div class="col-md-4">
+                <div class="form-check">{{ checkbox.tag }}
+                  <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          {{ form.especialidades.errors }}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+          {{ form.observacoes }}{{ form.observacoes.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "professionals/_formset.html" with formset=disponibilidades prefix="disponibilidades" titulo="Disponibilidade (grade semanal)" %}
+  {% include "professionals/_formset.html" with formset=ausencias prefix="ausencias" titulo="Ausências (férias, licenças, folgas)" %}
+
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% if profissional %}{% url 'professionals:ficha' profissional.pk %}{% else %}{% url 'professionals:listar' %}{% endif %}"
+       class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("[data-formset-add]").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      var prefixo = botao.getAttribute("data-formset-add");
+      var total = document.getElementById("id_" + prefixo + "-TOTAL_FORMS");
+      var modelo = document.getElementById("template-" + prefixo);
+      var corpo = document.getElementById("rows-" + prefixo);
+      if (!total || !modelo || !corpo) { return; }
+      corpo.insertAdjacentHTML("beforeend", modelo.innerHTML.replace(/__prefix__/g, total.value));
+      total.value = String(parseInt(total.value, 10) + 1);
+    });
+  });
+});
+</script>
+{% endblock %}

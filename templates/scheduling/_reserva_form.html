@@ -1,0 +1,62 @@
+<div class="modal-dialog">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Reservar horário</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info py-2 small">
+        <i class="bi bi-calendar-event me-1"></i>
+        {{ slot.agenda.data|date:"d/m/Y" }} às {{ slot.hora_inicio|time:"H:i" }}
+        - {{ slot.agenda.profissional.nome_completo }}
+      </div>
+
+      <form id="form-reserva"
+            hx-post="{% url 'scheduling:reservar_slot' slot.id %}"
+            hx-target="#grade-container"
+            hx-swap="innerHTML"
+            hx-on::after-request="if(event.detail.xhr.getResponseHeader('X-Reserva-OK')){ bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-reserva')).hide(); }">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label" for="id_paciente">Paciente *</label>
+          <select name="paciente" id="id_paciente" class="form-select" required>
+            <option value="">Selecione o paciente...</option>
+            {% for p in pacientes %}
+              <option value="{{ p.id }}">{{ p.nome_completo }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="id_tipo_atendimento">Tipo de atendimento *</label>
+          <select name="tipo_atendimento" id="id_tipo_atendimento" class="form-select" required>
+            <option value="">Selecione...</option>
+            {% for t in tipos_atendimento %}
+              <option value="{{ t.id }}">{{ t.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="id_sala">Sala</label>
+          <select name="sala" id="id_sala" class="form-select">
+            <option value="">Padrão da disponibilidade</option>
+            {% for s in salas %}
+              <option value="{{ s.id }}">{{ s.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="id_observacoes">Observações</label>
+          <textarea name="observacoes" id="id_observacoes" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Confirmar reserva</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

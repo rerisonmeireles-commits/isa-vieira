@@ -1,0 +1,43 @@
+from django.db import models
+from django.utils import timezone
+
+
+class TimeStampedModel(models.Model):
+    """Adiciona created_at e updated_at automaticamente em todas as tabelas."""
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)  # ← soft delete LGPD/COFFITO
+    
+    class Meta:
+        abstract = True
+
+
+class SoftDeleteQuerySet(models.QuerySet):
+    def delete(self):
+        return self.update(deleted_at=timezone.now())
+
+    def hard_delete(self):
+        return super().delete()
+
+
+class SoftDeleteManager(models.Manager):
+    def get_queryset(self):
+        return SoftDeleteQuerySet(self.model, using=self._db).filter(deleted_at__isnull=True)
+
+
+class SoftDeleteModel(TimeStampedModel):
+    """Soft delete: dados clínicos/financeiros nunca são apagados fisicamente (LGPD)."""
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = models.Manager()
+
+    def delete(self, using=None, keep_parents=False):
+        self.deleted_at = timezone.now()
+        self.save(using=using)
+
+    def hard_delete(self, using=None, keep_parents=False):
+        super().delete(using=using, keep_parents=keep_parents)
+
+    class Meta:
+        abstract = True

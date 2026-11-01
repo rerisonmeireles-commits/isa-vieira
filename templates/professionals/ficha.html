@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profissional.nome_completo }} - Clínica Fisio{% endblock %}
+{% block page_title %}Ficha do profissional{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3">
+    {% if profissional.foto %}
+      <img src="{{ profissional.foto.url }}" alt="Foto"
+           class="rounded-circle" style="width:64px;height:64px;object-fit:cover">
+    {% else %}
+      <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+           style="width:64px;height:64px;">
+        <i class="bi bi-person fs-3"></i>
+      </div>
+    {% endif %}
+    <div>
+      <h2 class="h4 mb-1">
+        <span class="d-inline-block rounded-circle me-1"
+              style="width:12px;height:12px;background:{{ profissional.cor_agenda }}"></span>
+        {{ profissional.nome_completo }}
+      </h2>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <span class="badge {% if profissional.status == 'ATIVO' %}badge-success{% elif profissional.status == 'AFASTADO' %}badge-warning{% else %}badge-secondary{% endif %}">
+          {{ profissional.get_status_display }}
+        </span>
+        <span class="badge badge-info">{{ profissional.conselho.sigla|default:profissional.conselho.nome }} {{ profissional.registro_conselho }}</span>
+        {% for esp in profissional.especialidades.all %}
+          <span class="badge badge-secondary">{{ esp.nome }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'professionals:listar' %}" class="btn btn-outline-secondary btn-sm border-0"><i class="bi bi-arrow-left"></i> Voltar</a>
+    <a href="{% url 'scheduling:grade' %}?profissional={{ profissional.id }}"
+       class="btn btn-claro-primary btn-sm"><i class="bi bi-calendar-week"></i> Ver agenda</a>
+    {% if pode_editar %}
+      <a href="{% url 'professionals:editar' profissional.pk %}" class="btn btn-claro-primary btn-sm">
+        <i class="bi bi-pencil"></i> Editar
+      </a>
+      <form method="post" action="{% url 'professionals:alternar_status' profissional.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-sm {% if profissional.status == 'ATIVO' %}btn-claro-warning{% elif profissional.status == 'AFASTADO' %}btn-outline-secondary{% else %}btn-claro-success{% endif %}">
+          {% if profissional.status == 'ATIVO' %}Afastar{% elif profissional.status == 'AFASTADO' %}Inativar{% else %}Reativar{% endif %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card card-kpi h-100">
+      <div class="card-header bg-white fw-semibold">Dados</div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5 text-muted">CPF</dt><dd class="col-7">{{ profissional.cpf|default:"-" }}</dd>
+          <dt class="col-5 text-muted">Conselho</dt><dd class="col-7">{{ profissional.conselho.nome }}</dd>
+          <dt class="col-5 text-muted">Registro</dt><dd class="col-7">{{ profissional.registro_conselho }}</dd>
+          <dt class="col-5 text-muted">Admissão</dt><dd class="col-7">{{ profissional.data_admissao|date:"d/m/Y"|default:"-" }}</dd>
+          <dt class="col-5 text-muted">Especialidades</dt>
+          <dd class="col-7">
+            {% for esp in profissional.especialidades.all %}{{ esp.nome }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}
+          </dd>
+        </dl>
+        {% if profissional.observacoes %}
+          <hr>
+          <div class="small text-muted mb-1">Observações</div>
+          <div class="small">{{ profissional.observacoes|linebreaksbr }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card card-kpi">
+      <div class="card-header bg-white fw-semibold">Disponibilidade semanal</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>Dia</th><th>Horário</th><th>Intervalo</th><th>Sala</th><th>Tipo</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for d in profissional.disponibilidades.all %}
+              <tr>
+                <td>{{ d.dia_semana_label }}</td>
+                <td>{{ d.hora_inicio|time:"H:i" }} – {{ d.hora_fim|time:"H:i" }}</td>
+                <td>{{ d.intervalo_minutos }} min</td>
+                <td>{{ d.sala_padrao.nome|default:"-" }}</td>
+                <td>{{ d.get_tipo_display }}</td>
+                <td>
+                  {% if d.ativa %}
+                    <span class="badge badge-success">Ativa</span>
+                  {% else %}
+                    <span class="badge badge-secondary">Inativa</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-3">Nenhuma disponibilidade cadastrada.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card card-kpi mt-3">
+      <div class="card-header bg-white fw-semibold">Ausências</div>
+      <ul class="list-group list-group-flush">
+        {% for a in profissional.ausencias.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>
+              <span class="badge badge-info text-dark border me-1">{{ a.get_tipo_display }}</span>
+              {{ a.data_inicio|date:"d/m/Y" }} a {{ a.data_fim|date:"d/m/Y" }}
+              {% if a.observacoes %}<small class="text-muted d-block">{{ a.observacoes }}</small>{% endif %}
+            </span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted small">Nenhuma ausência registrada.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

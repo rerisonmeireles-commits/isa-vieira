@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load mascaras %}
+
+{% block title %}{{ paciente.nome_completo }} - Clínica Fisio{% endblock %}
+{% block page_title %}Ficha do paciente{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h2 class="h4 mb-1">{{ paciente.nome_completo }}</h2>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="badge {% if paciente.status == 'ATIVO' %}badge-success{% else %}badge-secondary{% endif %}">
+        {{ paciente.get_status_display }}
+      </span>
+      <span class="badge badge-info">{{ paciente.get_origem_display }}</span>
+      <span class="text-muted small">Cadastrado em {{ paciente.created_at|date:"d/m/Y" }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'patients:listar' %}" class="btn btn-outline-secondary btn-sm border-0"><i class="bi bi-arrow-left"></i>Voltar</a>
+    {% if pode_editar %}
+      <a href="{% url 'patients:editar' paciente.uuid %}" class="btn btn-claro-primary btn-sm">
+        <i class="bi bi-pencil"></i> Editar
+      </a>
+      <form method="post" action="{% url 'patients:alternar_status' paciente.uuid %}">
+        {% csrf_token %}
+        <button class="btn btn-sm {% if paciente.status == 'ATIVO' %}btn-claro-warning{% else %}btn-claro-success{% endif %}">
+          {% if paciente.status == 'ATIVO' %}Inativar{% else %}Reativar{% endif %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+
+<!-- CONSENTIMENTO LGPD -->
+{% if consentimento is none %}
+  <div class="alert alert-warning py-2 d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-shield-exclamation me-1"></i><strong>Sem consentimento LGPD registrado</strong> - o aceite do paciente ainda não consta.</span>
+    <a href="{% url 'conta:consentimento_lista' %}" class="btn btn-sm btn-claro-warning"><i class="bi bi-plus-square"></i> Registrar consentimento</a>
+  </div>
+{% elif not consentimento.aceito %}
+  <div class="alert alert-danger py-2">
+    <i class="bi bi-shield-x me-1"></i><strong>Consentimento revogado</strong> em {{ consentimento.data_assinatura|date:"d/m/Y" }} - revise antes de novos atendimentos.
+  </div>
+{% endif %}
+
+
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card card-kpi h-100">
+      <div class="card-header bg-white fw-semibold">Dados pessoais</div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-4 text-muted">CPF</dt><dd class="col-8">{{ paciente.cpf|default:"-" }}</dd>
+          <dt class="col-4 text-muted">RG</dt><dd class="col-8">{{ paciente.rg|default:"-" }}</dd>
+          <dt class="col-4 text-muted">Nascimento</dt>
+          <dd class="col-8">
+            {{ paciente.data_nascimento|date:"d/m/Y"|default:"-" }}{% if paciente.idade %} ({{ paciente.idade }} anos){% endif %}
+          </dd>
+          <dt class="col-4 text-muted">Sexo</dt><dd class="col-8">{{ paciente.get_sexo_display|default:"-" }}</dd>
+          <dt class="col-4 text-muted">Estado civil</dt><dd class="col-8">{{ paciente.estado_civil|default:"-" }}</dd>
+          <dt class="col-4 text-muted">Profissão</dt><dd class="col-8">{{ paciente.profissao|default:"-" }}</dd>          
+          <dt class="col-4 text-muted">Telefone</dt><dd class="col-8">{{ paciente.telefone|telefone|default:"-" }}</dd>          
+          <dt class="col-4 text-muted">E-mail</dt><dd class="col-8">{{ paciente.email|default:"-" }}</dd>
+        </dl>
+        {% if paciente.observacoes %}
+          <hr>
+          <div class="small text-muted mb-1">Observações</div>
+          <div class="small">{{ paciente.observacoes|linebreaksbr }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 d-flex flex-column gap-3">
+    <div class="card card-kpi">
+      <div class="card-header bg-white fw-semibold">Contatos</div>
+        <ul class="list-group list-group-flush">
+          {% for c in paciente.contatos.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>
+                {{ c.get_tipo_display }}:
+                {% if c.tipo == 'TELEFONE' or c.tipo == 'WHATSAPP' %}
+                  {{ c.valor|telefone }}
+                {% else %}
+                  {{ c.valor }}
+                {% endif %}
+              </span>
+              {% if c.is_principal %}<span class="badge badge-primary">Principal</span>{% endif %}
+            </li>
+          {% empty %}
+            <li class="list-group-item text-muted small">Nenhum contato cadastrado.</li>
+          {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card card-kpi">
+      <div class="card-header bg-white fw-semibold">Contatos de emergência</div>
+      <ul class="list-group list-group-flush">
+        {% for ce in paciente.contatos_emergencia.all %}
+          <li class="list-group-item">
+            <div>{{ ce.nome }}{% if ce.parentesco %} - {{ ce.parentesco }}{% endif %}</div>
+            <div class="text-muted small">{{ ce.telefone|telefone }}</div>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted small">Nenhum contato de emergência cadastrado.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card card-kpi">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Convênios</span>
+        {% if pode_editar %}
+          <a href="{% url 'patients:vincular_convenio' paciente.uuid %}" class="btn btn-sm btn-claro-primary">
+            <i class="bi bi-plus-lg"></i> Vincular
+          </a>
+        {% endif %}
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for v in paciente.convenios.all %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold">{{ v.plano.convenio.nome }} - {{ v.plano.nome }}</div>
+                <div class="text-muted small">
+                  {% if v.numero_carteirinha %}Carteirinha: {{ v.numero_carteirinha }}{% endif %}
+                  {% if v.data_validade %} · Válido até {{ v.data_validade|date:"d/m/Y" }}{% endif %}
+                  {% if v.titular %} · Titular{% endif %}
+                </div>
+                {% if v.observacoes %}<div class="text-muted small">{{ v.observacoes }}</div>{% endif %}
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge {% if v.status == 'ATIVO' %}badge-success{% elif v.status == 'SUSPENSO' %}badge-warning{% else %}badge-secondary{% endif %}">
+                  {{ v.get_status_display }}
+                </span>
+                {% if pode_editar %}
+                  <a href="{% url 'patients:editar_convenio' paciente.uuid v.pk %}"
+                     class="btn btn-sm btn-claro-primary" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <form method="post" action="{% url 'patients:remover_convenio' paciente.uuid v.pk %}"
+                        class="d-inline"
+                        onsubmit="return confirm('Remover este vínculo de convênio?');">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger" title="Remover">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted small">Nenhum convênio vinculado.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div class="card card-kpi mt-3">
+  <div class="card-header bg-white fw-semibold">Endereços</div>
+  <ul class="list-group list-group-flush">
+    {% for e in paciente.enderecos.all %}
+      <li class="list-group-item">
+        <div>
+          {{ e.logradouro }}{% if e.numero %}, {{ e.numero }}{% endif %}{% if e.complemento %} - {{ e.complemento }}{% endif %}
+          {% if e.is_principal %}<span class="badge badge-primary ms-1">Principal</span>{% endif %}
+        </div>
+        <div class="text-muted small">
+          {{ e.bairro }}{% if e.bairro %} · {% endif %}{{ e.cidade }}/{{ e.uf }}{% if e.cep %} - CEP {{ e.cep }}{% endif %}
+        </div>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-muted small">Nenhum endereço cadastrado.</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="card card-kpi mt-3">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Últimos agendamentos</span>
+    <a href="{% url 'scheduling:grade' %}" class="btn btn-sm btn-claro-primary"><i class="bi bi-calendar-week" ></i> Ver agenda</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Data/Hora</th><th>Profissional</th><th>Serviço</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for a in agendamentos %}
+          <tr>
+            <td>{{ a.slot.agenda.data|date:"d/m/Y" }} {{ a.slot.hora_inicio|time:"H:i" }}</td>
+            <td>{{ a.profissional.nome_completo }}</td>
+            <td>{{ a.tipo_atendimento.nome }}</td>
+            <td><span class="badge badge-secondary">{{ a.get_status_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">Nenhum agendamento registrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

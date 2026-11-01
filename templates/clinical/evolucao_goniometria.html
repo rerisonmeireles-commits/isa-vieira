@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Evolução Goniométrica — {{ paciente.nome_completo }}{% endblock %}
+{% block page_title %}Evolução Goniométrica: {{ paciente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">  
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">       
+      <span><i class="bi bi-graph-up"></i> Evolução por articulação </span>
+      <a href="{% url 'clinical:detalhe_prontuario' paciente.pk %}?aba=dados"
+           class="btn btn-outline-secondary"><i class="bi bi-arrow-bar-left"></i>Voltar</a>
+  </div> 
+  <div class="card-body">
+    <canvas id="graficoGonio" height="100"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const series = {{ series_json|safe }};
+const labels = [...new Set(series.flatMap(s => s.pontos.map(p => p.data)))].sort();
+
+const datasets = series.map(s => ({
+  label: s.rotulo,
+  data: labels.map(d => {
+    const ponto = s.pontos.find(p => p.data === d);
+    return ponto ? ponto.graus : null;
+  }),
+  borderColor: s.cor,
+  tension: 0.3,      // suaviza a linha
+  spanGaps: true,    // quebra a linha onde não há medição
+}));
+
+new Chart(document.getElementById('graficoGonio'), {
+  type: 'line',
+  data: { labels, datasets },
+});
+</script>
+{% endblock %}

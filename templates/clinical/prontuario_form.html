@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Prontuário — {{ paciente.nome_completo }}{% endblock %}
+{% block page_title %}Editar Prontuário: {{ paciente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white">
+    <i class="bi bi-folder2-open"></i> <b>Dados Clínicos do Prontuário</b>
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label"><b>Histórico Clínico</b></label>
+          {{ form.historico_clinico }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-dark">
+            <i class="bi bi-exclamation-triangle"></i> <b>Alergias</b></label>
+          {{ form.alergias }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-dark">
+            <i class="bi bi-capsule"></i> <b>Medicamentos em Uso</b></label>
+          {{ form.medicamentos_em_uso }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label text-dark">
+            <i class="bi bi-heart-pulse"></i> <b>Condições Crônicas</b></label>
+          {{ form.condicoes_cronicas }}
+        </div>
+        <div class="col-12">
+          <label class="form-label"><b>Observações</b></label>
+          {{ form.observacoes }}
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Salvar Prontuário
+        </button>
+        <a href="{% url 'clinical:detalhe_prontuario' paciente.pk %}"
+           class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

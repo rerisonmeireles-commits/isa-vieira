@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Painel - Clínica Fisio{% endblock %}
+{% block page_title %}Olá, {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card card-kpi h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Agendamentos hoje</div>
+            <div class="fs-3 fw-bold">{{ kpi_agendamentos }}</div>
+          </div>
+          <i class="bi bi-calendar-check fs-2 text-primary"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card card-kpi h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Confirmados</div>
+            <div class="fs-3 fw-bold">{{ kpi_confirmados }}</div>
+          </div>
+          <i class="bi bi-check-circle fs-2 text-success"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card card-kpi h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Pacientes ativos</div>
+            <div class="fs-3 fw-bold">{{ kpi_pacientes }}</div>
+          </div>
+          <i class="bi bi-people fs-2 text-info"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card card-kpi h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted small">Pendências (agendados)</div>
+            <div class="fs-3 fw-bold">{{ kpi_pendencias }}</div>
+          </div>
+          <i class="bi bi-exclamation-circle fs-2 text-warning"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Agenda de hoje</span>
+    <a href="{% url 'scheduling:grade' %}" class="btn btn-sm btn-outline-primary">Ver agenda completa</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Horário</th>
+          <th>Paciente</th>
+          <th>Serviço</th>
+          <th>Profissional</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in agendamentos_lista %}
+          <tr>
+            <td>{{ a.slot.hora_inicio|time:"H:i" }}</td>
+            <td>{{ a.paciente.nome_completo }}</td>
+            <td>{{ a.tipo_atendimento.nome }}</td>
+            <td>{{ a.profissional.nome_completo }}</td>
+            <td>
+              <span class="badge {% if a.status == 'CONFIRMADO' %}bg-success{% elif a.status == 'AGENDADO' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                {{ a.get_status_display }}
+              </span>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">Nenhum agendamento para hoje.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

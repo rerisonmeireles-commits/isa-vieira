@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Usuários</h1>
+  <button class="btn btn-outline-primary btn-sm border-0"
+          hx-get="{% url 'conta:usuario_criar' %}"
+          hx-target="#modal-usuario-dialog" hx-swap="innerHTML"
+          hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-usuario')).show()">
+    <i class="bi bi-plus-lg"></i> <b>Novo usuário</b>   
+  </button>
+</div>
+
+<div id="usuarios-container">
+  {% include "accounts/_usuario_tabela.html" %}
+</div>
+
+<div class="modal fade" id="modal-usuario" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered" id="modal-usuario-dialog"></div>
+</div>
+{% endblock %}

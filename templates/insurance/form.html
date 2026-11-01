@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{% if convenio %}Editar convênio{% else %}Novo convênio{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if convenio %}Editar convênio{% else %}Novo convênio{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="card card-kpi mb-3">
+    <div class="card-header bg-white fw-semibold">Dados da operadora</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.nome.id_for_label }}">Nome *</label>
+          {{ form.nome }}{{ form.nome.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.cnpj.id_for_label }}">CNPJ</label>
+          {{ form.cnpj }}{{ form.cnpj.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.registro_ans.id_for_label }}">Registro ANS</label>
+          {{ form.registro_ans }}{{ form.registro_ans.errors }}
+        </div>
+        <div class="col-md-4">
+          <div class="form-check mt-4">
+            {{ form.ativo }}
+            <label class="form-check-label" for="{{ form.ativo.id_for_label }}">Convênio ativo</label>
+          </div>
+          {{ form.ativo.errors }}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+          {{ form.observacoes }}{{ form.observacoes.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "insurance/_formset.html" with formset=planos prefix="planos" titulo="Planos" %}
+
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% if convenio %}{% url 'insurance:ficha' convenio.pk %}{% else %}{% url 'insurance:listar' %}{% endif %}"
+       class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("[data-formset-add]").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      var prefixo = botao.getAttribute("data-formset-add");
+      var total = document.getElementById("id_" + prefixo + "-TOTAL_FORMS");
+      var modelo = document.getElementById("template-" + prefixo);
+      var corpo = document.getElementById("rows-" + prefixo);
+      if (!total || !modelo || !corpo) { return; }
+      corpo.insertAdjacentHTML("beforeend", modelo.innerHTML.replace(/__prefix__/g, total.value));
+      total.value = String(parseInt(total.value, 10) + 1);
+    });
+  });
+});
+</script>
+{% endblock %}

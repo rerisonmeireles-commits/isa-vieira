@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Em breve{% endblock %}
+{% block page_title %}Módulo em desenvolvimento{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-tools fs-1 text-muted"></i>
+  <h2 class="h4 mt-3">O módulo "{{ modulo|capfirst }}" ainda não foi implementado</h2>
+  <p class="text-muted">Este item do menu está reservado na navegação e será construído nas próximas fases do projeto.</p>
+  <a href="{% url 'conta:home' %}" class="btn btn-primary">Voltar ao painel</a>
+</div>
+{% endblock %}

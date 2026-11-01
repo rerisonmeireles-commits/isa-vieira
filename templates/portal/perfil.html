@@ -1,0 +1,14 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+<h1 class="h4 mb-3">Meu perfil</h1>
+<div class="card">
+  <div class="card-body">
+    <p class="mb-1"><strong>Nome:</strong> {{ paciente.nome_completo }}</p>
+    <p class="mb-1"><strong>Data de nascimento:</strong> {{ paciente.data_nascimento|date:"d/m/Y" }}</p>
+    <p class="mb-1"><strong>CPF:</strong> {{ paciente.cpf }}</p>
+    <p class="mb-1"><strong>E-mail:</strong> {{ paciente.email|default:"—" }}</p>
+    <p class="mb-1"><strong>Telefone:</strong> {{ paciente.telefone|default:"—" }}</p>
+    <p class="mb-0"><strong>Profissão:</strong> {{ paciente.profissao|default:"—" }}</p>
+  </div>
+</div>
+{% endblock %}

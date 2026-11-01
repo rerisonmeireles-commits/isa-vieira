@@ -1,0 +1,25 @@
+<form method="post" action="{% url 'portal:agendar_confirmar' %}">
+  {% csrf_token %}
+  <input type="hidden" name="tipo" value="{{ tipo_id }}">
+  <input type="hidden" name="profissional" value="{{ profissional.pk }}">
+
+  <p class="small text-muted mb-2">
+    <i class="bi bi-calendar-event me-1"></i>{{ data_selecionada|date:"d/m/Y" }}
+  </p>
+
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    {% for s in slots %}
+      <input type="radio" class="btn-check" name="slot" id="slot-{{ s.pk }}"
+             value="{{ s.pk }}" required>
+      <label class="btn btn-outline-primary" for="slot-{{ s.pk }}">
+        {{ s.hora_inicio|time:"H:i" }}
+      </label>
+    {% empty %}
+      <p class="text-muted mb-0">Nenhum horário livre nesta data.</p>
+    {% endfor %}
+  </div>
+
+  {% if slots %}
+    <button type="submit" class="btn btn-primary w-100">Confirmar agendamento</button>
+  {% endif %}
+</form>

@@ -1,0 +1,39 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Próximos atendimentos{% endblock %}
+
+{% block content %}
+  <h1>Próximos atendimentos</h1>
+
+  {% for ag in agendamentos %}
+    <div class="card">
+      <div class="badge">{{ ag.get_status_display }}</div>
+      <p>
+        <strong>{{ ag.slot.agenda.data|date:"d/m/Y" }}</strong>
+        às {{ ag.slot.hora_inicio|time:"H:i" }}
+        — {{ ag.tipo_atendimento.nome }}
+      </p>
+      <p class="muted">
+        Profissional: {{ ag.slot.agenda.profissional.user.get_full_name|default:"—" }}
+        {% if ag.sala %}&middot; Sala: {{ ag.sala.nome }}{% endif %}
+      </p>
+    </div>
+  {% empty %}
+    <div class="card">
+      <p>Nenhum atendimento agendado no momento.</p>
+      <p class="muted">Fale com a recepção para marcar uma sessão.</p>
+    </div>
+  {% endfor %}
+
+  {% if is_paginated %}
+    <p class="muted">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% endif %}
+      Página {{ page_obj.number }} de {{ paginator.num_pages }}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Próxima</a>
+      {% endif %}
+    </p>
+  {% endif %}
+{% endblock %}

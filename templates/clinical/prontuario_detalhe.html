@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Prontuário - {{ paciente.nome_completo }}{% endblock %}
+{% block page_title %}Prontuário: {{ paciente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="h5 mb-1">{{ paciente.nome_completo }}</h2>
+    <span class="text-muted small">
+      CPF: {{ paciente.cpf|default:"-" }} ·
+      Prontuário aberto em {{ prontuario.data_abertura|date:"d/m/Y" }}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'clinical:criar_avaliacao' paciente.pk %}" class="btn btn-outline-primary btn-sm border-0">
+      <i class="bi bi-clipboard2-pulse"></i> <b> Nova Avaliação</b>
+    </a>
+    <a href="{% url 'clinical:nova_evolucao' paciente.pk %}" class="btn btn-outline-primary btn-sm border-0">
+      <i class="bi bi-journal-text"></i> <b> Nova Evolução</b>
+    </a>
+  </div>
+</div>
+
+<!-- Alertas clínicos -->
+{% if prontuario.alergias or prontuario.medicamentos_em_uso or prontuario.condicoes_cronicas %}
+<div class="row g-2 mb-3">
+  {% if prontuario.alergias %}
+  <div class="col-md-4">
+    <div class="alert alert-danger mb-0 py-2"><i class="bi bi-exclamation-triangle"></i>
+      <strong>Alergias:</strong> {{ prontuario.alergias }}</div>
+  </div>
+  {% endif %}
+  {% if prontuario.medicamentos_em_uso %}
+  <div class="col-md-4">
+    <div class="alert alert-warning mb-0 py-2"><i class="bi bi-capsule"></i>
+      <strong>Medicamentos:</strong> {{ prontuario.medicamentos_em_uso }}</div>
+  </div>
+  {% endif %}
+  {% if prontuario.condicoes_cronicas %}
+  <div class="col-md-4">
+    <div class="alert alert-info mb-0 py-2"><i class="bi bi-heart-pulse"></i>
+      <strong>Condições crônicas:</strong> {{ prontuario.condicoes_cronicas }}</div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Abas -->
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if aba == 'dados' %}active{% endif %}"
+       href="{% url 'clinical:detalhe_prontuario' paciente.pk %}">Dados Clínicos</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if aba == 'avaliacoes' %}active{% endif %}"
+       href="{% url 'clinical:detalhe_prontuario' paciente.pk %}?aba=avaliacoes">
+       Avaliações <span class="badge badge-info-number">{{ avaliacoes|length }}</span></a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if aba == 'evolucoes' %}active{% endif %}"
+       href="{% url 'clinical:detalhe_prontuario' paciente.pk %}?aba=evolucoes">
+       Evoluções <span class="badge badge-info-number">{{ evolucoes|length }}</span></a>       
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if aba == 'documentos' %}active{% endif %}"
+       href="?aba=documentos">Documentos <span class="badge badge-info-number">{{ documentos|length }}</span></a>
+  </li>   
+</ul>
+
+{% if atendimento_aberto %}
+  <div class="alert alert-warning d-flex justify-content-between align-items-center">
+    <div>
+      <i class="bi bi-hourglass-split"></i>
+      <b>Sessão em andamento</b> - finalize o check-out ao encerrar o atendimento.
+    </div>
+    <form method="post"
+          action="{% url 'scheduling:finalizar_atendimento' atendimento_aberto.uuid %}?next={{ request.get_full_path }}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-warning btn-sm"
+              onclick="return confirm('Finalizar este atendimento?')">
+        <i class="bi bi-check-lg"></i> Finalizar atendimento
+      </button>
+    </form>           
+  </div>
+{% endif %}   
+
+{% if aba == 'dados' %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card card-kpi h-100">
+
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">          
+                <span>
+                    <i class="bi bi-file-medical"></i> Histórico Clínico
+                </span>
+                <span>
+                    <a href="{% url 'clinical:editar_prontuario' paciente.pk %}"
+                      class="btn btn-outline-secondary btn-sm"
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="top"
+                      title="Editar Prontuário">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+
+                    <a href="{% url 'clinical:evolucao_goniometria' paciente.pk %}"
+                      class="btn btn-outline-secondary btn-sm"
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="top"
+                      title="Gráfico de Evolução Goniométrica">
+                        <i class="bi bi-graph-up"></i>
+                    </a>
+                </span>
+            </div>      
+
+
+            <div class="card-body">
+              <p class="mb-2"><strong>Histórico:</strong> {{ prontuario.historico_clinico|default:"-" }}</p>
+              <p class="mb-2"><strong>Observações:</strong> {{ prontuario.observacoes|default:"-" }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card card-kpi h-100">
+            <div class="card-header bg-white"><i class="bi bi-clock-history"></i> Últimas Evoluções</div>
+            <div class="card-body">
+              {% for ev in evolucoes|slice:":3" %}
+                <p class="mb-2 small">
+                  <strong>{{ ev.data|date:"d/m/Y H:i" }}</strong> - {{ ev.profissional }}<br>
+                  <span class="text-muted">{{ ev.subjetivo|truncatewords:15|default:"-" }}</span>
+                </p>
+              {% empty %}
+                <p class="text-muted mb-0">Nenhuma evolução registrada.</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+{% elif aba == 'avaliacoes' %}
+      {% for av in avaliacoes %}
+      <div class="{% if av.status == 'L' %}liberado-avaliacao{% elif av.status == 'P' %}pendente-liberacao{% else %}cancelada-avaliacao{% endif %}">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <a href="{% url 'clinical:detalhe_avaliacao' av.pk %}" class="text-decoration-none text-primary" title="Detalhes da Avaliação">
+                  <i class="bi bi-info-circle text-secondary"></i>
+                </a> <strong>{{ av.get_tipo_display }}</strong> - {{ av.data|date:"d/m/Y" }} - {{ av.profissional }}        
+
+                <span class="badge {% if av.status == 'L' %}badge-success{% elif av.status == 'P' %}badge-warning{% else %}badge-secondary{% endif %}">
+                  {{ av.get_status_display }}
+                </span>
+                {% if av.queixa_principal %}
+                  <div class="small text-muted mt-1">Queixa: {{ av.queixa_principal|truncatewords:20 }}</div>
+                {% endif %}
+            </div>
+            {% if av.status == 'P' %}
+                  <div class="d-flex gap-2">
+                    <form method="post" action="{% url 'clinical:liberar_avaliacao' av.pk %}">
+                      {% csrf_token %}
+                      <button class="btn btn-outline-primary btn-sm border-0"> <b>Liberar</b></button>
+                    </form>
+
+                    <form method="post" action="{% url 'clinical:inativar_avaliacao' av.pk %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="motivo" value="Inativada pelo operador">
+                      <button class="btn btn-outline-primary btn-sm border-0"> <b>Inativar</b></button>
+                    </form>
+                  
+                    <a href="{% url 'clinical:editar_avaliacao' av.pk %}"
+                    class="btn btn-outline-primary btn-sm border-0"> <b>Editar</b></a>        
+                  </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-muted">Nenhuma avaliação registrada.</p>
+      {% endfor %}
+
+{% elif aba == 'evolucoes' %}
+      {% for ev in evolucoes %}
+
+      <div class="card card-kpi mb-2">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between">      
+            <strong class="text-dark">{{ ev.created_at|date:"d/m/Y H:i" }} - {{ ev.profissional }}</strong>
+            {% if ev.atendimento %}<span class="badge badge-info">Atendimento #{{ ev.atendimento_id }}</span>{% endif %}
+              {% if ev.pk in evolucoes_editaveis %}
+                <a href="{% url 'clinical:editar_evolucao' ev.pk %}"
+                  class="btn btn-outline-primary btn-sm border-0"><i class="bi bi-pencil"></i> <b>Editar</b></a>
+              {% endif %}           
+
+          </div>
+          <div class="row g-2 mt-2 small">    
+            <div class="col-md-6"><strong>S (Subjetivo):</strong> {{ ev.subjetivo|default:"-" }}</div>
+            <div class="col-md-6"><strong>O (Objetivo):</strong> {{ ev.objetivo|default:"-" }}</div>
+            <div class="col-md-6"><strong>A (Avaliação):</strong> {{ ev.avaliacao_clinica|default:"-" }}</div>
+            <div class="col-md-6"><strong>P (Plano):</strong> {{ ev.plano|default:"-" }}</div>
+          </div>
+          {% if ev.frequencia_cardiaca or ev.pressao_arterial %}
+          <div class="mt-2 small text-muted">
+            <i class="bi bi-activity"></i>
+            FC: {{ ev.frequencia_cardiaca|default:"-" }} · FR: {{ ev.frequencia_respiratoria|default:"-" }} ·
+            PA: {{ ev.pressao_arterial|default:"-" }} · SpO₂: {{ ev.saturacao_o2|default:"-" }}%
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-muted">Nenhuma evolução registrada.</p>
+      {% endfor %}
+{% elif aba == 'documentos' %}
+      <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Documentos do paciente</strong>
+            <button class="btn btn-outline-primary btn-sm border-0"
+                    hx-get="{% url 'documents:documento_criar' %}?paciente={{ paciente.pk }}"
+                    hx-target="#modal-documento-dialog" hx-swap="innerHTML"
+                    hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-documento')).show()">
+              <i class="bi bi-plus-lg"></i> <b> Novo documento</b>
+            </button>            
+          </div>
+
+          <div class="card-body" id="documentos-container">
+                <div class="card-body" id="documentos-container">
+                    {% include "documents/_documento_tabela.html" %}
+                </div>
+          </div>
+        </div>
+
+        <div class="modal fade" id="modal-documento" tabindex="-1">
+          <div class="modal-dialog modal-lg modal-dialog-centered" id="modal-documento-dialog"></div>
+        </div>
+
+{% endif %}
+{% endblock %}

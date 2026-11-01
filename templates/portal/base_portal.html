@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Portal do Paciente{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f5f5f5; color: #1a1a1a; }
+    header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 16px 24px; }
+    main { max-width: 880px; margin: 24px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+    .muted { color: #6b6b6b; font-size: 14px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
+             background: #e8f0fe; color: #1a56db; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Olá, {{ request.user.get_full_name|default:request.user.username }}</strong>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

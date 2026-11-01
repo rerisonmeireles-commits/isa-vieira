@@ -1,0 +1,28 @@
+{% if elegiveis is not None %}
+  {% if elegiveis %}
+    <div class="alert alert-info py-2 mb-2">
+      <strong>{{ elegiveis|length }}</strong> conta(s) elegível(is) —
+      total calculado: <strong>R$ {{ total }}</strong>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead class="table-secondary">
+          <tr><th>Vencimento</th><th>Paciente</th><th>Descrição</th><th>Status</th><th class="text-end">Valor</th></tr>
+        </thead>
+        <tbody>
+          {% for conta in elegiveis %}
+            <tr>
+              <td>{{ conta.data_vencimento|date:"d/m/Y" }}</td>
+              <td>{{ conta.paciente.nome_completo }}</td>
+              <td>{{ conta.descricao }}</td>
+              <td>{{ conta.get_status_display }}</td>
+              <td class="text-end">{{ conta.valor_total }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-warning py-2 mb-0">Nenhuma conta elegível no período para este convênio.</div>
+  {% endif %}
+{% endif %}

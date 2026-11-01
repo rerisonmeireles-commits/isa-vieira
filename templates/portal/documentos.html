@@ -1,0 +1,21 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+<h1 class="h4 mb-3">Meus documentos</h1>
+<div class="list-group">
+  {% for d in documentos %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+      <div class="fw-semibold">{{ d.titulo|default:"Documento" }}</div>
+      <div class="small text-muted">{{ d.created_at|date:"d/m/Y" }}</div>
+    </div>
+
+    <a href="{% url 'portal:documento_download' d.uuid %}" class="btn btn-sm btn-outline-primary">
+      <i class="bi bi-download"></i>
+    </a>
+
+  </div>
+  {% empty %}
+  <div class="text-center text-muted py-4">Nenhum documento disponível.</div>
+  {% endfor %}
+</div>
+{% endblock %}

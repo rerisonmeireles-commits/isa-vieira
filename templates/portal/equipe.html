@@ -1,0 +1,14 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+<h1 class="h4 mb-3">Minha equipe</h1>
+<div class="list-group">
+  {% for p in profissionais %}
+  <div class="list-group-item">
+    <div class="fw-semibold">{{ p.nome_completo }}</div>
+    <div class="small text-muted">{{ p.especialidades.all|join:", " }}</div>
+  </div>
+  {% empty %}
+  <div class="text-center text-muted py-4">Equipe não cadastrada.</div>
+  {% endfor %}
+</div>
+{% endblock %}

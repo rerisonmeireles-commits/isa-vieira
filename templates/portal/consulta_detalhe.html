@@ -1,0 +1,126 @@
+{# templates/portal/consulta_detalhe.html                                          #}
+{# Detalhe de UMA consulta do PACIENTE. A view deve filtrar                       #}
+{# uuid=uuid, paciente=request.paciente — nunca só o uuid.                        #}
+{# O bloco de cancelamento ficou comentado: depende de existir uma view POST      #}
+{# portal:cancelar_consulta, que eu não confirmei.                                #}
+
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Consulta de {{ consulta.data|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}Consulta{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+  <a href="{% url 'portal:consultas' %}" class="btn btn-outline-secondary btn-sm border-0">
+    <i class="bi bi-arrow-left"></i> Voltar para minhas consultas
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+
+    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+      <h5 class="card-title mb-0">
+        <i class="bi bi-calendar-check text-primary"></i>
+        {{ consulta.data|date:"d/m/Y" }}
+        {% if consulta.hora_inicio %}
+          às {{ consulta.hora_inicio|time:"H:i" }}
+        {% endif %}
+      </h5>
+      <span class="badge text-bg-light border fw-normal">
+        {{ consulta.get_status_display }}
+      </span>
+    </div>
+{% if consulta.status == 'CANCELADO' %}
+<div class="alert alert-danger mb-3">
+  <p class="mb-1 fw-semibold">Esta consulta foi cancelada.</p>
+  {% if consulta.motivo_cancelamento %}
+    <p class="mb-0 small">{{ consulta.motivo_cancelamento }}</p>
+  {% endif %}
+</div>
+{% elif consulta.pode_cancelar %}
+<div class="card border-danger-subtle">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted small fw-semibold mb-2">
+      Cancelar consulta
+    </h6>
+    <form method="post"
+          action="{% url 'portal:cancelar_consulta' consulta.uuid %}">
+      {% csrf_token %}
+      <div class="mb-2">
+        <label for="motivo" class="form-label small text-muted mb-1">
+          Motivo do cancelamento
+        </label>
+        <textarea name="motivo" id="motivo" rows="2" required
+                  maxlength="500" class="form-control form-control-sm"
+                  placeholder="Ex.: viagem, conflito de horário, melhora do quadro"></textarea>
+      </div>
+      <button type="submit" class="btn btn-outline-danger btn-sm border-0">
+        <i class="bi bi-x-circle"></i> Confirmar cancelamento
+      </button>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="text-muted small mb-0">
+  <i class="bi bi-info-circle"></i> {{ consulta.motivo_bloqueio_cancelamento }}
+</p>
+{% endif %}
+    
+    
+    <p class="text-muted small mt-4 mb-0">
+      <i class="bi bi-info-circle"></i>
+      Precisa remarcar ou cancelar? Entre em contato com a clínica.
+    </p>  
+
+
+    <dl class="row mb-0 small">
+      <dt class="col-5 col-sm-4 text-muted fw-normal">Procedimento</dt>
+      <dd class="col-7 col-sm-8">
+        {{ consulta.tipo_atendimento|default:"-" }}
+      </dd>
+
+      <dt class="col-5 col-sm-4 text-muted fw-normal">Profissional</dt>
+      <dd class="col-7 col-sm-8">
+        {{ consulta.profissional|default:"-" }}
+      </dd>
+
+      {% if consulta.hora_fim %}
+      <dt class="col-5 col-sm-4 text-muted fw-normal">Término previsto</dt>
+      <dd class="col-7 col-sm-8">
+        {{ consulta.hora_fim|time:"H:i" }}
+      </dd>
+      {% endif %}
+    </dl>
+
+  </div>
+</div>
+
+{% if consulta.observacoes %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h6 class="text-uppercase text-muted small fw-semibold mb-2">Observações</h6>
+    <div class="mb-0">{{ consulta.observacoes|linebreaks }}</div>
+  </div>
+</div>
+{% endif %}
+
+{# Bloco de cancelamento — descomentar quando existir a view POST.                #}
+{# <div class="card border-danger-subtle">                                       #}
+{#   <div class="card-body">                                                     #}
+{#     <form method="post" action="{% url 'portal:cancelar_consulta' consulta.uuid %}"> #}
+{#       {% csrf_token %}                                                        #}
+{#       <button type="submit" class="btn btn-outline-danger btn-sm border-0">   #}
+{#         <i class="bi bi-x-circle"></i> Cancelar esta consulta                 #}
+{#       </button>                                                               #}
+{#     </form>                                                                   #}
+{#   </div>                                                                      #}
+{# </div>                                                                        #}
+
+<p class="text-muted small mt-4 mb-0">
+  <i class="bi bi-info-circle"></i>
+  Precisa remarcar ou cancelar? Entre em contato com a clínica.
+</p>
+
+{% endblock %}

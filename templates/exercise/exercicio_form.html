@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{% if exercicio %}Editar{% else %}Novo{% endif %} Exercício{% endblock %}
+{% block page_title %}{% if exercicio %}Editar Exercício{% else %}Novo Exercício{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white"><i class="bi bi-activity"></i> Dados do exercício</div>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nome</label>
+          {{ form.nome }}
+          {% for e in form.nome.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Categoria</label>
+          {{ form.categoria }}
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <div class="form-check mb-2">
+            {{ form.ativo }}
+            <label class="form-check-label" for="{{ form.ativo.id_for_label }}">Ativo</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Descrição</label>
+          {{ form.descricao }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Músculos envolvidos</label>
+          {{ form.musculos_envolvidos }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Contraindicações</label>
+          {{ form.contraindicacoes }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Instruções de execução</label>
+          {{ form.instrucoes }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Vídeo (URL)</label>
+          {{ form.video_url }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Imagem</label>
+          {{ form.imagem }}
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Salvar
+        </button>
+        <a href="{% url 'exercise:lista_exercicios' %}"
+           class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

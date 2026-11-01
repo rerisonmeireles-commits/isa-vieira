@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ convenio.nome }} - Clínica Fisio{% endblock %}
+{% block page_title %}Ficha do convênio{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h2 class="h4 mb-1">{{ convenio.nome }}</h2>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="badge {% if convenio.ativo %}badge-success{% else %}badge-secondary{% endif %}">
+        {% if convenio.ativo %}Ativo{% else %}Inativo{% endif %}
+      </span>
+      {% if convenio.registro_ans %}
+        <span class="badge badge-info text-dark">ANS {{ convenio.registro_ans }}</span>
+      {% endif %}
+      <span class="text-muted small">Cadastrado em {{ convenio.created_at|date:"d/m/Y" }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'insurance:listar' %}" class="btn btn-outline-secondary btn-sm border-0"> <i class="bi bi-arrow-left"></i>
+       Voltar</a>
+    {% if pode_editar %}
+      <a href="{% url 'insurance:editar' convenio.pk %}" class="btn btn-claro-primary btn-sm">
+        <i class="bi bi-pencil"></i> Editar
+      </a>
+      <form method="post" action="{% url 'insurance:alternar_ativo' convenio.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-sm {% if convenio.ativo %}btn-claro-warning{% else %}btn-claro-success{% endif %}">
+          {% if convenio.ativo %}Inativar{% else %}Reativar{% endif %}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card card-kpi h-100">
+      <div class="card-header bg-white fw-semibold">Dados</div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5 text-muted">CNPJ</dt><dd class="col-7">{{ convenio.cnpj|default:"-" }}</dd>
+          <dt class="col-5 text-muted">Registro ANS</dt><dd class="col-7">{{ convenio.registro_ans|default:"-" }}</dd>
+          <dt class="col-5 text-muted">Planos</dt><dd class="col-7">{{ convenio.planos.count }}</dd>
+          <dt class="col-5 text-muted">Pacientes vinculados</dt><dd class="col-7">{{ convenio.num_pacientes }}</dd>
+        </dl>
+        {% if convenio.observacoes %}
+          <hr>
+          <div class="small text-muted mb-1">Observações</div>
+          <div class="small">{{ convenio.observacoes|linebreaksbr }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card card-kpi">
+      <div class="card-header bg-white fw-semibold">Planos</div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>Nome</th><th>Código ANS</th><th>Carência</th><th>Situação</th></tr>
+          </thead>
+          <tbody>
+            {% for p in convenio.planos.all %}
+              <tr>
+                <td class="fw-semibold">{{ p.nome }}</td>
+                <td>{{ p.codigo_ans|default:"-" }}</td>
+                <td>{{ p.carencia_dias }} dia{{ p.carencia_dias|pluralize }}</td>
+                <td>
+                  <span class="badge {% if p.ativo %}badge-success{% else %}badge-secondary{% endif %}">
+                    {% if p.ativo %}Ativo{% else %}Inativo{% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center text-muted py-3">Nenhum plano cadastrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

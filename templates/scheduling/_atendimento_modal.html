@@ -1,0 +1,77 @@
+<div class="modal-dialog">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Atendimento - {{ atendimento.paciente.nome_completo }}</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+    </div>
+    <div class="modal-body">
+      <div class="d-flex gap-2 align-items-center mb-3">
+        <span class="badge {% if atendimento.status == 'CONCLUIDO' %}bg-success{% elif atendimento.status == 'EM_ANDAMENTO' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+          {{ atendimento.get_status_display }}
+        </span>
+        <span class="badge bg-info text-dark">{{ atendimento.tipo_atendimento.nome }}</span>
+      </div>
+
+      <dl class="row mb-0 small">
+        <dt class="col-5 text-muted">Paciente</dt>
+        <dd class="col-7">{{ atendimento.paciente.nome_completo }}</dd>
+        <dt class="col-5 text-muted">Profissional</dt>
+        <dd class="col-7">{{ atendimento.profissional.nome_completo }}</dd>
+        <dt class="col-5 text-muted">Sala</dt>
+        <dd class="col-7">{{ atendimento.sala.nome|default:"-" }}</dd>
+        <dt class="col-5 text-muted">Início</dt>
+        <dd class="col-7">{{ atendimento.data_inicio|date:"d/m/Y H:i"|default:"-" }}</dd>
+        <dt class="col-5 text-muted">Fim</dt>
+        <dd class="col-7">{{ atendimento.data_fim|date:"d/m/Y H:i"|default:"-" }}</dd>
+        <dt class="col-5 text-muted">Agendamento</dt>
+        <dd class="col-7">
+          {{ atendimento.agendamento.slot.agenda.data|date:"d/m/Y" }}
+          {{ atendimento.agendamento.slot.hora_inicio|time:"H:i" }}
+        </dd>
+      </dl>
+
+      {% if atendimento.observacoes %}
+        <hr>
+        <div class="small text-muted mb-1">Observações</div>
+        <div class="small">{{ atendimento.observacoes|linebreaksbr }}</div>
+      {% endif %}
+    </div>
+    <div class="modal-footer">
+      <a href="{% url 'patients:ficha' atendimento.paciente.uuid %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-person"></i> Ver paciente
+      </a>
+
+      <a href="{% url 'clinical:detalhe_prontuario' atendimento.paciente_id %}"
+        class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-journal-medical"></i> Prontuário</a>      
+
+      <a href="{% url 'clinical:nova_evolucao' atendimento.paciente_id %}?atendimento={{ atendimento.pk }}"
+        class="btn btn-outline-primary">
+        <i class="bi bi-journal-medical"></i> Nova Evolução</a>
+
+        {% if atendimento.status == 'EM_ANDAMENTO' %}
+        <hr>
+        <div class="d-flex gap-2">
+          <!-- {% if pode_evoluir %} -->
+          <a href="{% url 'clinical:nova_evolucao' atendimento.paciente_id %}?atendimento={{ atendimento.pk }}"
+            class="btn btn-outline-primary">
+            <i class="bi bi-journal-medical"></i> Nova Evolução1</a>
+          <a href="{% url 'clinical:nova_evolucao' atendimento.paciente_id %}?atendimento={{ atendimento.pk }}"
+            class="btn btn-outline-primary">
+            <i class="bi bi-journal-medical"></i> Nova Evolução2</a>            
+          <!-- {% endif %} -->
+          <form method="post" action="{% url 'scheduling:finalizar_atendimento' atendimento.uuid %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success"
+                    onclick="return confirm('Finalizar este atendimento?')">
+              <i class="bi bi-check-lg"></i> Finalizar atendimento
+            </button>
+          </form>
+        </div>
+        {% endif %}        
+
+        
+      <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Fechar</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Contas a Receber - Clínica Fisio{% endblock %}
+{% block page_title %}Contas a Receber{% endblock %}
+
+{% block content %}
+<div class="card card-kpi mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label small text-muted mb-1">Buscar por paciente ou descrição</label>
+        <input type="text" name="q" value="{{ busca }}" class="form-control" placeholder="Ex.: Maria ou Sessão">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Status</label>
+        <select name="status" class="form-select">
+          <option value="">Todos</option>
+          {% for valor, rotulo in status_choices %}
+            <option value="{{ valor }}" {% if status_filtro == valor %}selected{% endif %}>{{ rotulo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-primary flex-grow-1"><i class="bi bi-search"></i> Filtrar</button>
+        <a href="{% url 'financial:listar_contas' %}" class="btn btn-outline-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">{{ total }} conta{{ total|pluralize }}{% if busca %} · busca "{{ busca }}"{% endif %}</span>
+    {% if pode_editar %}
+      <a href="{% url 'financial:criar_conta' %}" class="btn btn-sm btn-outline-primary border-0">
+        <i class="bi bi-plus-lg"></i> <b>Nova conta</b>
+      </a>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Paciente</th>
+          <th>Descrição</th>
+          <th>Vencimento</th>
+          <th>Valor</th>
+          <th>Pago</th>
+          <th>Status</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in pagina %}
+          <tr>
+            <td>
+              <a href="{% url 'financial:ficha_conta' c.pk %}" class="text-decoration-none fw-semibold">
+                {{ c.paciente.nome_completo }}
+              </a>
+            </td>
+            <td>{{ c.descricao|default:c.get_tipo_display }}</td>
+            <td>{{ c.data_vencimento|date:"d/m/Y" }}</td>
+            <td>R$ {{ c.valor_total|floatformat:2 }}</td>
+            <td>R$ {{ c.total_pago|floatformat:2 }}</td>
+            <td>
+              <span class="badge {% if c.status == 'PAGA' %}badge-success{% elif c.status == 'ABERTA' %}badge-warning{% elif c.status == 'ATRASADA' %}badge-danger{% else %}badge-secondary{% endif %}">
+                {{ c.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'financial:ficha_conta' c.pk %}" class="btn btn-md btn-claro-primary" title="Ver conta">
+                <i class="bi bi-eye"></i>
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">Nenhuma conta encontrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagina.paginator.num_pages > 1 %}
+    <div class="card-footer bg-white">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+          {% if pagina.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ pagina.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+          {% endif %}
+          <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+          {% if pagina.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ pagina.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Próxima</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

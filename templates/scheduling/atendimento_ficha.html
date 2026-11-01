@@ -1,0 +1,123 @@
+{# templates/scheduling/atendimento_ficha.html #}
+{% extends "base.html" %}
+
+{% block title %}Ficha do Atendimento #{{ atendimento.pk }}{% endblock %}
+{% block page_title %}Ficha do Atendimento — {{ atendimento.paciente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center"> 
+    <div class="d-flex gap-2 align-items-center">
+      <span class="badge {% if atendimento.status == 'CONCLUIDO' %}badge-success{% elif atendimento.status == 'EM_ANDAMENTO' %}badge-warning{% else %}badge-secondary{% endif %}">
+        {{ atendimento.get_status_display }}
+      </span>
+      <span class="badge badge-procedimento">{{ atendimento.tipo_atendimento.nome }}</span>
+    </div>
+
+    <a href="{% url 'patients:ficha' atendimento.paciente.uuid %}"
+      class="btn btn-outline-primary btn-sm border-0">
+      <i class="bi bi-person"></i> <b>Ver paciente</b>
+    </a>              
+  </div>
+
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-md-3 text-muted">Paciente </dt>
+      <dd class="col-md-3">{{ atendimento.paciente.nome_completo }}</dd>
+      <dt class="col-md-3 text-muted">Profissional</dt>
+      <dd class="col-md-3">{{ atendimento.profissional.nome_completo }}</dd>
+
+      <dt class="col-md-3 text-muted">Sala</dt>
+      <dd class="col-md-3">{{ atendimento.sala.nome|default:"-" }}</dd>
+      <dt class="col-md-3 text-muted">Agendamento</dt>
+      <dd class="col-md-3">
+        {{ atendimento.agendamento.slot.agenda.data|date:"d/m/Y" }}
+        às {{ atendimento.agendamento.slot.hora_inicio|time:"H:i" }}
+      </dd>
+
+      <dt class="col-md-3 text-muted">Início</dt>
+      <dd class="col-md-3">{{ atendimento.data_inicio|date:"d/m/Y H:i"|default:"-" }}</dd>
+      <dt class="col-md-3 text-muted">Fim</dt>
+      <dd class="col-md-3">{{ atendimento.data_fim|date:"d/m/Y H:i"|default:"-" }}</dd>
+    </dl>
+
+    {% if atendimento.observacoes %}
+      <hr>
+      <div class="small text-muted mb-1">Observações</div>
+      <div class="small">{{ atendimento.observacoes|linebreaksbr }}</div>
+    {% endif %}
+
+    {# Ações da sessão em curso #}
+    {% if atendimento.status == 'EM_ANDAMENTO' %}
+      <hr>
+      <div class="d-flex gap-2">
+        {% if perm.atender %}
+          <a href="{% url 'clinical:nova_evolucao' atendimento.paciente_id %}?atendimento={{ atendimento.pk }}"
+            class="btn btn-outline-primary border-0">
+            <i class="bi bi-journal-medical"></i> Nova Evolução
+          </a>
+        {% endif %}
+
+        {% if perm.atender %}
+          <form method="post"
+                hx-post="{% url 'scheduling:finalizar_atendimento' atendimento.uuid %}"
+                hx-target="#grade-container"
+                hx-swap="innerHTML"
+                hx-confirm="Finalizar este atendimento?"
+                hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-reserva')).hide()">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary border-0">
+              <i class="bi bi-check-lg"></i> Finalizar atendimento
+            </button>
+          </form>
+        {% endif %}
+
+      </div>
+    {% endif %}
+
+    {# Evoluções desta sessão — o vínculo posse → sessão visível #}
+    <hr>
+    <h6 class="text-muted text-uppercase small">
+      <i class="bi bi-journal-medical"></i> Evoluções desta sessão
+    </h6>
+    {% if atendimento.evolucoes.exists %}
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr><th>#</th><th>Registrada em</th><th>Profissional</th><th class="text-end"></th></tr>
+      </thead>
+      <tbody>
+      {% for ev in atendimento.evolucoes.all %}
+        <tr>
+          <td>{{ ev.pk }}</td>
+          <td>{{ ev.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{{ ev.profissional.nome_completo }}</td>
+          <td class="text-end">
+
+            {% if ev.atendimento %}
+            <a href="{% url 'scheduling:ficha_atendimento' ev.atendimento.uuid %}"
+              class="badge text-bg-light text-decoration-none">
+              Atendimento #{{ ev.atendimento_id }}
+            </a>
+            {% endif %}                   
+
+            <a href="{% url 'clinical:editar_evolucao' ev.pk %}"
+              class="btn btn-sm btn-outline-primary btn-sm border-0 ">              
+              <i class="bi bi-layout-text-sidebar-reverse"></i> <b> Abrir Evolução</b></a>
+
+            <a href="{% url 'clinical:detalhe_prontuario' atendimento.paciente_id %}?aba=evolucoes"
+              class="btn btn-outline-primary btn-sm border-0">
+              <i class="bi bi-journal-medical"></i> <b> Prontuário completo</b></a>              
+          </td>               
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="text-muted small mb-0">
+        Nenhuma evolução registrada nesta sessão{% if atendimento.status == 'EM_ANDAMENTO' %} — registre antes de finalizar{% endif %}.
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

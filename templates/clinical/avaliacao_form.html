@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}{% if avaliacao %}Editar{% else %}Nova{% endif %} Avaliação - {{ paciente.nome_completo }}{% endblock %}
+{% block page_title %}{% if avaliacao %}Editar Avaliação{% else %}Nova Avaliação{% endif %}: {{ paciente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white">
+    <i class="bi bi-clipboard2-pulse"></i>
+    {% if avaliacao %}Editando Avaliação{% else %}Avaliação Física Funcional{% endif %}
+    {% if not avaliacao %}<span class="badge text-bg-warning">Pendente de Liberação</span>{% endif %}
+  </div>
+
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+      <div class="row g-3">
+        <div class="col-md-12">
+          <label class="form-label">Tipo</label><br>
+          {{ form.tipo }}
+          {% for e in form.tipo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label">Queixa Principal</label>
+          {{ form.queixa_principal }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">História da Doença Atual</label>
+          {{ form.historia_doenca_atual }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">História Pregressa</label>
+          {{ form.historia_pregressa }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Medicamentos em Uso</label>
+          {{ form.medicamentos_em_uso }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Exame Físico</label>
+          {{ form.exame_fisico }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">EVA Dor (0 - 10)</label>
+          {{ form.escalas_eva_dor }}
+          {% for e in form.escalas_eva_dor.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+
+        {# ===== ESCALA FIM (opcional, recolhida) ===== #}
+        <div class="col-12">
+          <div class="card card-kpi mb-3">
+            <div class="card-header bg-white">
+              <button class="btn btn-md btn-link text-decoration-none p-0" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#fim-section"
+                      aria-expanded="{% if avaliacao.itens_fim.exists %}true{% else %}false{% endif %}">
+                <i class="bi bi-list-check"></i> <strong>Escala FIM</strong> - (Functional Independence Measure)  <i class="bi bi-chevron-down ms-1"></i>
+              </button>
+            </div>
+            <div id="fim-section" class="collapse {% if avaliacao.itens_fim.exists %}show{% endif %}">
+              <div class="card-body">
+                {{ fim_set.management_form }}
+                <table class="table table-sm align-middle">
+                  <thead><tr><th>Item</th><th style="width:140px">Pontuação (1 - 7)</th></tr></thead>
+                  <tbody>
+                  {% for f in fim_set %}
+                    {% ifchanged f.instance.dominio %}
+                    <tr class="table-light"><td colspan="2" class="fw-bold">
+                      {% if f.instance.dominio == 'MOTOR' %}Domínio Motor{% else %}Domínio Cognitivo{% endif %}
+                    </td></tr>
+                    {% endifchanged %}
+                    <tr>
+                      <td>{{ f.instance.get_item_display }} {{ f.id }}{{ f.item }}{{ f.dominio }}</td>
+                      <td>{{ f.pontuacao }}{% for e in f.pontuacao.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+{# ===== GONIOMETRIA ESTRUTURADA ===== #}
+<div class="col-12">
+  <div class="card card-kpi mb-3">
+    <div class="card-header bg-white">
+      <button class="btn btn-md btn-link text-decoration-none p-0"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#gonio-section"
+              aria-controls="gonio-section"
+              aria-expanded="true">
+        <i class="bi bi-rulers"></i>
+        <strong>Goniometria</strong> - (articulação · movimento · lado)
+        <i class="bi bi-chevron-down ms-1"></i>
+      </button>
+    </div>
+
+    <div id="gonio-section">
+      <div class="card-body">
+        {{ gonio_set.management_form }}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Articulação</th>
+                <th>Movimento</th>
+                <th style="width:110px">Lado</th>
+                <th style="width:100px">Graus</th>
+                <th>Observação</th>
+                <th style="width:60px">Excluir</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for f in gonio_set %}
+                <tr>
+					<td>{{ f.id }}{{ f.articulacao }}{% for e in f.articulacao.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+					<td>{{ f.movimento }}{% for e in f.movimento.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+					<td>{{ f.lado }}</td><td>{{ f.graus }}{% for e in f.graus.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+					</td><td>{{ f.observacao }}</td><td class="text-center">{{ f.DELETE }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="small text-muted">
+          <i class="bi bi-info-circle"></i>
+          Preencha apenas as linhas que avaliou — linhas em branco
+          são ignoradas. Para mais medições, salve e edite a avaliação
+          enquanto ela estiver Pendente.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div class="col-md-4">
+          <label class="form-label">Hipótese Diagnóstica</label>
+          {{ form.hipotese_diagnostica }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Conduta</label>
+          {{ form.conduta }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Plano Terapêutico</label>
+          {{ form.plano_terapeutico }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Objetivo Curto Prazo</label>
+          {{ form.objetivo_curto_prazo }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Objetivo Longo Prazo</label>
+          {{ form.objetivo_longo_prazo }}
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Observações</label>
+          {{ form.observacoes }}
+        </div>
+      </div>
+
+      {% if form.errors or fim_set.errors or gonio_set.errors or fim_set.non_form_errors or gonio_set.non_form_errors %}
+      <div class="alert alert-danger mt-3">
+        <strong>Verifique os campos destacados:</strong>
+        <ul class="mb-0">
+          {% for campo, erros in form.errors.items %}
+            {% for e in erros %}<li>{{ campo }}: {{ e }}</li>{% endfor %}
+          {% endfor %}
+          {% for f in fim_set %}{% for e in f.pontuacao.errors %}<li>FIM - {{ f.instance.get_item_display|default:"item" }}: {{ e }}</li>{% endfor %}{% endfor %}
+          {% for f in gonio_set %}{% for e in f.errors.values %}{% for er in e %}<li>Goniometria (linha {{ forloop.parentloop.counter }}): {{ er }}</li>{% endfor %}{% endfor %}{% endfor %}
+          {% for e in gonio_set.non_form_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i>
+          {% if avaliacao %}Salvar Alterações{% else %}Salvar Avaliação{% endif %}
+        </button>
+        <a href="{% url 'clinical:detalhe_prontuario' paciente.pk %}?aba=avaliacoes"
+           class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

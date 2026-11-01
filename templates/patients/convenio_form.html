@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{% if vinculo %}Editar vínculo{% else %}Vincular convênio{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if vinculo %}Editar vínculo de convênio{% else %}Vincular convênio{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card card-kpi mb-3">
+      <div class="card-header bg-white">
+        <span class="fw-semibold">{{ paciente.nome_completo }}</span>
+        <span class="text-muted small"> - vínculo de convênio</span>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.plano.id_for_label }}">Plano *</label>
+              {{ form.plano }}{{ form.plano.errors }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.numero_carteirinha.id_for_label }}">Número da carteirinha</label>
+              {{ form.numero_carteirinha }}{{ form.numero_carteirinha.errors }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="{{ form.data_validade.id_for_label }}">Validade</label>
+              {{ form.data_validade }}{{ form.data_validade.errors }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+              {{ form.status }}{{ form.status.errors }}
+            </div>
+            <div class="col-md-4">
+              <div class="form-check mt-4">
+                {{ form.titular }}
+                <label class="form-check-label" for="{{ form.titular.id_for_label }}">Titular</label>
+              </div>
+              {{ form.titular.errors }}
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+              {{ form.observacoes }}{{ form.observacoes.errors }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{% url 'patients:ficha' paciente.uuid %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+<div class="mb-3">
+  <span class="badge text-bg-secondary">Passo 1 de 3</span>
+  <h1 class="h4 mt-2 mb-1">O que você deseja agendar?</h1>
+  <p class="text-muted small mb-0">Escolha o serviço para começar.</p>
+</div>
+<div class="list-group">
+  {% for t in tipos %}
+  <a href="{% url 'portal:agendar_profissional' t.pk %}"
+     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-start gap-3">
+      <span class="rounded-circle flex-shrink-0 mt-1"
+            style="width:12px;height:12px;background:{{ t.cor|default:'#0d6efd' }};"></span>
+      <div>
+        <div class="fw-semibold">{{ t.nome }}</div>
+        {% if t.descricao %}<div class="small text-muted">{{ t.descricao }}</div>{% endif %}
+        {% if t.duracao_minutos %}<div class="small text-muted">{{ t.duracao_minutos }} min</div>{% endif %}
+      </div>
+    </div>
+    <i class="bi bi-chevron-right"></i>
+  </a>
+  {% empty %}
+  <div class="text-center text-muted py-4">Nenhum serviço disponível.</div>
+  {% endfor %}
+</div>
+{% endblock %}

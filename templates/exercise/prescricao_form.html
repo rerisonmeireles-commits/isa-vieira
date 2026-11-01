@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{% if prescricao %}Editar{% else %}Nova{% endif %} Prescrição{% endblock %}
+{% block page_title %}{% if prescricao %}Editar Prescrição{% else %}Nova Prescrição{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white">
+    <i class="bi bi-clipboard2-pulse"></i> Dados da prescrição
+    {% if prescricao %}<span class="badge text-bg-success">Ativa</span>{% endif %}
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Paciente</label>
+          {{ form.paciente }}
+          {% for e in form.paciente.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Data de validade</label>
+          {{ form.data_validade }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Objetivo</label>
+          {{ form.objetivo }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Observações</label>
+          {{ form.observacoes }}
+        </div>
+      </div>
+
+      <hr class="my-4">
+      <h6 class="text-muted text-uppercase small"><i class="bi bi-list-check"></i> Itens da prescrição</h6>
+      {{ item_set.management_form }}
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Exercício</th>
+            <th style="width:70px">Séries</th>
+            <th style="width:90px">Repetições</th>
+            <th style="width:110px">Carga</th>
+            <th style="width:70px">Intervalo (s)</th>
+            <th style="width:70px">Freq./semana</th>
+            <th style="width:60px">Excluir</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for f in item_set %}
+          <tr>
+            <td>{{ f.id }}{{ f.exercicio }}{% for e in f.exercicio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+            <td>{{ f.series }}</td>
+            <td>{{ f.repeticoes }}</td>
+            <td>{{ f.carga }}</td>
+            <td>{{ f.intervalo_segundos }}</td>
+            <td>{{ f.frequencia_semanal }}</td>
+            <td class="text-center">{{ f.DELETE }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="small text-muted">
+        <i class="bi bi-info-circle"></i>
+        Para progressão e observações detalhadas por item, salve e edite a prescrição.
+      </div>
+
+      {% if form.errors or item_set.errors or item_set.non_form_errors %}
+      <div class="alert alert-danger mt-3">
+        <strong>Verifique os campos destacados:</strong>
+        <ul class="mb-0">
+          {% for campo, erros in form.errors.items %}
+            {% for e in erros %}<li>{{ campo }}: {{ e }}</li>{% endfor %}
+          {% endfor %}
+          {% for e in item_set.non_form_errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Salvar Prescrição
+        </button>
+        <a href="{% url 'exercise:lista_prescricoes' %}"
+           class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

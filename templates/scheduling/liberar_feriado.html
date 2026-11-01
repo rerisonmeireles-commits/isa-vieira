@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Liberar funcionamento em feriado - Clínica Fisio{% endblock %}
+{% block page_title %}Liberar funcionamento em feriado{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card card-kpi mb-3">
+      <div class="card-header bg-white">
+        <span class="fw-semibold">Exceção de funcionamento</span>
+        <span class="text-muted small"> - decisão pontual, por profissional e data</span>
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label" for="id_profissional">Profissional *</label>
+            <select name="profissional_id" id="id_profissional" class="form-select" required>
+              <option value="">Selecione...</option>
+              {% for p in profissionais %}
+                <option value="{{ p.pk }}">{{ p.nome_completo }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="id_data">Data do feriado *</label>
+            <input type="date" name="data" id="id_data" class="form-control"
+                   value="{{ data_inicial }}" required>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-unlock"></i> Liberar e gerar grade
+            </button>
+            <a href="{% url 'scheduling:grade' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+        <hr>
+        <div class="small text-muted">
+          A exceção vale apenas para esta data - o feriado recorrente continua fechado
+          nos próximos anos, a menos que a liberação seja declarada novamente.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

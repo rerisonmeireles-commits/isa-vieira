@@ -1,0 +1,197 @@
+{% if request.META.HTTP_HX_REQUEST %}
+  <div id="messages-container" hx-swap-oob="true">
+    {% include "_messages.html" %}
+  </div>
+{% endif %}
+{% load agenda_extras %}
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <button class="btn btn-outline-secondary btn-sm"
+            hx-get="{% url 'scheduling:grade' %}?profissional={{ profissional.id }}&data_inicio={{ semana_anterior|date:'Y-m-d' }}"
+            hx-target="#grade-container" hx-swap="innerHTML">
+      ← Anterior
+    </button>
+    <span class="fw-semibold">Semana de {{ data_inicio|date:"d/m/Y" }}</span>
+    <button class="btn btn-outline-secondary btn-sm"
+            hx-get="{% url 'scheduling:grade' %}?profissional={{ profissional.id }}&data_inicio={{ semana_proxima|date:'Y-m-d' }}"
+            hx-target="#grade-container" hx-swap="innerHTML">
+      Próxima →
+    </button>
+  </div>
+
+  {% if pode_gerar_grade %}
+    <form method="post"
+          hx-post="{% url 'scheduling:gerar_grade' profissional.id %}"
+          hx-target="#grade-container" hx-swap="innerHTML"
+          class="mb-3">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-primary">Gerar grade (próximos 45 dias)</button>
+    </form>
+  {% endif %}
+
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle text-center">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 90px;">Horário</th>
+          {% for dia in dias %}
+            <th>{{ dia.rotulo }}<br><small class="text-muted">{{ dia.data|date:"d/m" }}</small></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% if grade_horarios %}
+          {% for hora in grade_horarios %}
+            <tr>
+              <td class="text-muted">{{ hora|time:"H:i" }}</td>
+              {% for dia in dias %}
+                {% if not dia.celulas %}
+                  {# Coluna sem slots: um único <td> com rowspan cobre todas as linhas. #}
+                  {# Só na primeira linha — nas demais a coluna é omitida. #}
+                  {% if forloop.parentloop.first %}
+                    <td class="p-1 align-middle bg-light" rowspan="{{ grade_horarios|length }}">
+                      <div class="text-muted small">
+                        {% if dia.agenda and dia.agenda.status == 'SEM_EXPEDIENTE' %}
+                          {% if dia.agenda.excecao_feriado %}
+                            Feriado liberado<br>sem horários
+                          {% else %}
+                            Sem expediente
+                          {% endif %}
+                        {% elif not dia.agenda %}
+                          Não gerada
+                        {% else %}
+                          Sem horários
+                        {% endif %}
+                      </div>
+                    </td>
+                  {% endif %}
+                {% elif hora in dia.cobertos %}
+                  {# Coberto pelo bloco mesclado acima - célula omitida (rowspan). #}
+                {% else %}
+                  {% with celula=dia.celulas|get_item:hora %}
+                    {% if celula and celula.tipo == 'bloco' %}
+                      <td class="p-1" rowspan="{{ celula.rowspan }}">
+                        {% with ag=celula.agendamento %}
+                          <div class="card-agenda card-{{ ag.status|lower }} h-100"
+                              {% if ag.status == 'AGENDADO' or ag.status == 'CONFIRMADO' %}draggable="true" data-agendamento-id="{{ ag.id }}" data-remarcar-url="{% url 'scheduling:remarcar_agendamento' ag.id %}"{% endif %}>
+                            <div class="fw-bold" style="font-size:.85rem; line-height:1.2"
+                                title="{{ ag.paciente.nome_completo }}">
+                              {{ ag.paciente.nome_completo }}
+                            </div>
+                            <small class="font-monospace">{{ celula.hora_inicio|time:"H:i" }}–{{ celula.hora_fim|time:"H:i" }}</small><br>
+                            <span>{{ ag.get_status_display }}</span>
+                            <div class="d-flex gap-1 justify-content-center mt-1 flex-wrap">
+                              {% if ag.status == 'AGENDADO' %}
+                                  <form method="post"
+                                        hx-post="{% url 'scheduling:alterar_status' ag.id 'CONFIRMADO' %}"
+                                        hx-target="#grade-container" hx-swap="innerHTML">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-secondary btn-grade"
+                                      data-toggle="tooltip"
+                                      title="Confirmar agendamento"><i class="bi bi-person-circle"></i> Confirmar</button>
+                                  </form>
+                              {% endif %}
+                              {% if ag.status == 'CONFIRMADO' %}
+                                  <form method="post"
+                                        hx-post="{% url 'scheduling:iniciar_atendimento' ag.id %}"
+                                        hx-target="#grade-container"
+                                        hx-swap="innerHTML">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-secondary btn-grade"
+                                            data-toggle="tooltip"
+                                            title="Gerar Atendimento"><i class="bi bi-person-vcard"></i> Gerar
+                                        </button>
+                                  </form>
+                              {% elif ag.status == 'EM_ATENDIMENTO' %}
+                                {% if perm.atender %}
+                                    <button type="button" class="btn btn-sm btn-outline-success border-0"
+                                            hx-get="{% url 'scheduling:ficha_atendimento' ag.atendimento.uuid %}"
+                                            hx-target="#modal-reserva"
+                                            hx-swap="innerHTML"
+                                            hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-reserva')).show()"
+                                            data-toggle="tooltip"
+                                            title="Atender Paciente"><i class="bi bi-check2-circle"></i> Iniciar Atendimento
+                                    </button>
+                                {% endif %}
+                              {% endif %}
+                              {% if ag.status == 'ATENDIDO' and ag.atendimento %}
+                                  {% if perm.atender %}
+                                    <button type="button" class="btn btn-sm btn-outline-success border-0"
+                                            hx-get="{% url 'scheduling:ficha_atendimento' ag.atendimento.uuid %}"
+                                            hx-target="#modal-reserva"
+                                            hx-swap="innerHTML"
+                                            hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-reserva')).show()"
+                                            data-toggle="tooltip"
+                                            title="Ver ficha do atendimento">
+                                      <i class="bi bi-person-circle"></i> Ficha do atendimento
+                                    </button>
+                                  {% endif %}
+                              {% endif %}
+                              {% if ag.status == 'AGENDADO' or ag.status == 'CONFIRMADO' %}
+                                  <form method="post"
+                                        hx-post="{% url 'scheduling:cancelar_agendamento' ag.id %}"
+                                        hx-target="#grade-container"
+                                        hx-swap="innerHTML"
+                                        hx-confirm="Cancelar este agendamento?">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-secondary btn-grade"
+                                            data-toggle="tooltip"
+                                            title="Cancelar agendamento">
+                                            <i class="bi bi-x-circle"></i> Cancelar
+                                    </button>
+                                  </form>
+                                  <form method="post"
+                                        hx-post="{% url 'scheduling:alterar_status' ag.id 'FALTOU' %}"
+                                        hx-target="#grade-container"
+                                        hx-swap="innerHTML"
+                                        hx-confirm="Marcar falta do paciente?">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger btn-grade"
+                                            data-toggle="tooltip"
+                                            title="Registrar falta do paciente">
+                                            <i class="bi bi-person-fill-slash"></i> Faltou
+                                    </button>
+                                  </form>
+                              {% endif %}
+                            </div>
+                          </div>
+                        {% endwith %}
+                      </td>
+                    {% elif celula and celula.tipo == 'livre' %}
+                      <td class="p-1" data-slot-id="{{ celula.slot.id }}" data-slot-livre>
+                        <button class="btn btn-sm btn-outline-success border-0 w-80"
+                                hx-get="{% url 'scheduling:reservar_slot' celula.slot.id %}"
+                                hx-target="#modal-reserva" hx-swap="innerHTML"
+                                hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-reserva')).show()">
+                          {{ celula.slot.hora_inicio|time:"H:i" }}
+                        </button>
+                      </td>
+                    {% elif celula and celula.tipo == 'bloqueado' %}
+                      <td class="p-1">
+                        <div class="border rounded p-1 bg-warning-subtle">
+                          <small class="text-muted">Bloqueado</small>
+                        </div>
+                      </td>
+                    {% elif celula and celula.tipo == 'ocupado_sem_ag' %}
+                      <td class="p-1">
+                        <div class="card-agenda"><small class="text-muted">Ocupado</small></div>
+                      </td>
+                    {% else %}
+                      <td class="p-1"><div class="text-muted small">-</div></td>
+                    {% endif %}
+                  {% endwith %}
+                {% endif %}
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="{{ dias|length|add:1 }}" class="text-muted py-3">
+              Nenhum horário disponível nesta semana.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>

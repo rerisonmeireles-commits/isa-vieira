@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dados da Clínica - Clínica Fisio{% endblock %}
+{% block page_title %}Dados da Clínica{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+
+  <div class="card card-kpi mb-3">
+    <div class="card-header bg-white fw-semibold"><i class="bi bi-building me-1"></i> Dados da Clínica</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ clinica_form.nome_fantasia.id_for_label }}">Nome fantasia *</label>
+          {{ clinica_form.nome_fantasia }}{{ clinica_form.nome_fantasia.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ clinica_form.razao_social.id_for_label }}">Razão social</label>
+          {{ clinica_form.razao_social }}{{ clinica_form.razao_social.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ clinica_form.cnpj.id_for_label }}">CNPJ *</label>
+          {{ clinica_form.cnpj }}{{ clinica_form.cnpj.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ clinica_form.inscricao_estadual.id_for_label }}">Inscrição estadual</label>
+          {{ clinica_form.inscricao_estadual }}{{ clinica_form.inscricao_estadual.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ clinica_form.telefone.id_for_label }}">Telefone</label>
+          {{ clinica_form.telefone }}{{ clinica_form.telefone.errors }}
+        </div>
+        <div class="col-md-2">
+          <label class="form-label" for="{{ clinica_form.cep.id_for_label }}">CEP</label>
+          {{ clinica_form.cep }}{{ clinica_form.cep.errors }}
+        </div>        
+        <div class="col-md-6">
+          <label class="form-label" for="{{ clinica_form.logradouro.id_for_label }}">Logradouro</label>
+          {{ clinica_form.logradouro }}{{ clinica_form.logradouro.errors }}
+        </div>
+        <div class="col-md-1">
+          <label class="form-label" for="{{ clinica_form.numero.id_for_label }}">Número</label>
+          {{ clinica_form.numero }}{{ clinica_form.numero.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ clinica_form.complemento.id_for_label }}">Complemento</label>
+          {{ clinica_form.complemento }}{{ clinica_form.complemento.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ clinica_form.bairro.id_for_label }}">Bairro</label>
+          {{ clinica_form.bairro }}{{ clinica_form.bairro.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ clinica_form.cidade.id_for_label }}">Cidade</label>
+          {{ clinica_form.cidade }}{{ clinica_form.cidade.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ clinica_form.uf.id_for_label }}">UF</label>
+          {{ clinica_form.uf }}{{ clinica_form.uf.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ clinica_form.email.id_for_label }}">E-mail</label>
+          {{ clinica_form.email }}{{ clinica_form.email.errors }}
+        </div>
+        <div class="col-md-8  ">
+          <label class="form-label" for="{{ clinica_form.logo.id_for_label }}">Logo</label>
+          {{ clinica_form.logo }}{{ clinica_form.logo.errors }}
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            {{ clinica_form.ativa }}
+            <label class="form-check-label" for="{{ clinica_form.ativa.id_for_label }}">Clínica ativa</label>
+          </div>
+          {{ clinica_form.ativa.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-kpi mb-3">
+    <div class="card-header bg-white fw-semibold"><i class="bi bi-sliders me-1"></i> Configuração</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label" for="{{ configuracao_form.hora_abertura.id_for_label }}">Abertura *</label>
+          {{ configuracao_form.hora_abertura }}{{ configuracao_form.hora_abertura.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ configuracao_form.hora_fechamento.id_for_label }}">Fechamento *</label>
+          {{ configuracao_form.hora_fechamento }}{{ configuracao_form.hora_fechamento.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ configuracao_form.duracao_padrao_minutos.id_for_label }}">Duração padrão (min)</label>
+          {{ configuracao_form.duracao_padrao_minutos }}{{ configuracao_form.duracao_padrao_minutos.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ configuracao_form.intervalo_padrao_minutos.id_for_label }}">Intervalo padrão (min)</label>
+          {{ configuracao_form.intervalo_padrao_minutos }}{{ configuracao_form.intervalo_padrao_minutos.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ configuracao_form.politica_cancelamento_horas.id_for_label }}">Cancelamento (horas antes)</label>
+          {{ configuracao_form.politica_cancelamento_horas }}{{ configuracao_form.politica_cancelamento_horas.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ configuracao_form.dias_max_antecedencia.id_for_label }}">Máx. antecedência (dias)</label>
+          {{ configuracao_form.dias_max_antecedencia }}{{ configuracao_form.dias_max_antecedencia.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ configuracao_form.uf.id_for_label }}">UF (feriados)</label>
+          {{ configuracao_form.uf }}{{ configuracao_form.uf.errors }}
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="form-check mb-2">
+            {{ configuracao_form.permite_agendamento_online }}
+            <label class="form-check-label" for="{{ configuracao_form.permite_agendamento_online.id_for_label }}">
+              Agendamento online
+            </label>
+          </div>
+          {{ configuracao_form.permite_agendamento_online.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ configuracao_form.mensagem_boas_vindas.id_for_label }}">Mensagem de boas-vindas</label>
+          {{ configuracao_form.mensagem_boas_vindas }}{{ configuracao_form.mensagem_boas_vindas.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ configuracao_form.mensagem_lembrete.id_for_label }}">Mensagem de lembrete</label>
+          {{ configuracao_form.mensagem_lembrete }}{{ configuracao_form.mensagem_lembrete.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'conta:home' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+  
+<!-- BUSCA CEP -->
+<script src="{% static 'js/viacep.js' %}" defer></script>
+
+{% endblock %}

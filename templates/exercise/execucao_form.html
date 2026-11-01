@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Execução{% endblock %}
+{% block page_title %}Registrar Execução — {{ item.exercicio }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white">
+    <i class="bi bi-check2-square"></i>
+    {{ item.ordem }}. {{ item.exercicio }} — {{ item.prescricao.paciente }}
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="form-check mt-2">
+            {{ form.realizado }}
+            <label class="form-check-label" for="{{ form.realizado.id_for_label }}">
+              Exercício realizado
+            </label>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Séries feitas</label>
+          {{ form.series_feitas }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Repetições feitas</label>
+          {{ form.repeticoes_feitas }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Percepção de esforço (1-10)</label>
+          {{ form.percepcao_esforco }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Dor EVA (0-10)</label>
+          {{ form.dor_eva }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observações</label>
+          {{ form.observacoes }}
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Registrar
+        </button>
+        <a href="{% url 'exercise:detalhe_prescricao' item.prescricao_id %}"
+           class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

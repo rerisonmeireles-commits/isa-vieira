@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{% if conselho %}Editar conselho{% else %}Novo conselho{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if conselho %}Editar conselho{% else %}Novo conselho{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card card-kpi mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.sigla.id_for_label }}">Sigla *</label>
+          {{ form.sigla }}{{ form.sigla.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.uf.id_for_label }}">UF</label>
+          {{ form.uf }}{{ form.uf.errors }}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.nome.id_for_label }}">Nome</label>
+          {{ form.nome }}{{ form.nome.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'registry:listar_conselhos' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

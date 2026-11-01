@@ -1,0 +1,36 @@
+{% load static %}
+{% comment %}
+Formset de ENDEREÇOS - layout em cards (9 campos não cabem em linha de tabela).
+Contrato do formset.js preservado: data-formset-add, #rows-{{ prefix }}, #template-{{ prefix }}.
+{% endcomment %}
+
+<div class="card card-kpi mb-3">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">{{ titulo }}</span>
+    <button type="button" class="btn btn-sm btn-outline-primary" data-formset-add="{{ prefix }}">
+      <i class="bi bi-plus-lg"></i> Adicionar
+    </button>
+  </div>
+
+  <div class="card-body pb-0">
+    {{ formset.management_form }}
+    {{ formset.non_form_errors }}
+  </div>
+
+  <div class="card-body pt-0">
+    <div class="row g-2" id="rows-{{ prefix }}">
+      {% for f in formset %}
+        {% include "patients/_formset_endereco_row.html" with f=f %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Modelo de linha vazia: o JS troca __prefix__ pelo índice atual -->
+  <template id="template-{{ prefix }}">
+    {% include "patients/_formset_endereco_row.html" with f=formset.empty_form %}
+  </template>
+
+  <!-- BUSCA CEP -->
+  <script src="{% static 'js/viacep.js' %}" defer></script>
+
+</div>

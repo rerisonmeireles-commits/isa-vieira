@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Atendimentos{% endblock %}
+{% block page_title %}Atendimentos{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white">
+    <i class="bi bi-calendar2-check"></i> Filtros
+  </div>
+  <div class="card-body">
+    <form method="get" class="row g-2">
+      <div class="col-md-4">
+        <select name="status" class="form-select">
+          <option value="">Todos os status</option>
+          {% for valor, rotulo in status_opcoes %}
+          <option value="{{ valor }}" {% if valor == status_atual %}selected{% endif %}>
+            {{ rotulo }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card card-kpi mt-3">
+  <div class="card-body">
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Paciente</th>
+          <th>Profissional</th>
+          <th>Tipo</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for a in atendimentos %}
+        <tr>
+          <td>{{ a.pk }}</td>
+          <td>{{ a.paciente }}</td>
+          <td>{{ a.profissional }}</td>
+          <td>{{ a.tipo_atendimento }}</td>
+          <td>{{ a.data_inicio|date:"d/m/Y H:i"|default:"—" }}</td>
+          <td>{{ a.data_fim|date:"d/m/Y H:i"|default:"—" }}</td>
+          <td>
+            <span class="badge {% if a.status == 'CONCLUIDO' %}text-bg-success{% elif a.status == 'EM_ANDAMENTO' %}text-bg-primary{% elif a.status == 'NAO_REALIZADO' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
+              {{ a.get_status_display }}
+            </span>
+          </td>
+          <td class="text-end">
+            <a href="{% url 'attendance:detalhe_atendimento' a.pk %}"
+               class="btn btn-sm btn-outline-primary">Abrir</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">
+          Nenhum atendimento encontrado.
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "portal/portal_base.html" %}
+{% block portal_conteudo %}
+
+<div class="mb-4">
+  <h1 class="h4 mb-1">Olá, {{ request.paciente.nome_completo|default:request.user.first_name }}! </h1>
+  <p class="text-muted mb-0">Que bom ter você por aqui.</p>
+</div>
+
+{% if proximo %}
+<div class="card mb-4 border-primary shadow-sm">
+  <div class="card-body">
+    <span class="badge badge-info mb-2">Próxima sessão</span>
+    <h2 class="h5 mb-1">
+      {% if proximo.tipo_atendimento %}{{ proximo.tipo_atendimento }}{% else %}Sessão agendada{% endif %}
+    </h2>
+    <p class="mb-1">
+      {{ proximo.slot.agenda.data|date:"d \d\e F \d\e Y" }}
+      {% if proximo.profissional %} com {{ proximo.profissional }}{% endif %}
+    </p>
+    <p class="mb-0 text-muted">
+      <i class="bi bi-clock me-1"></i>{{ proximo.slot.hora_inicio|time:"H:i" }}
+    </p>    
+    <p class="mb-0 text-muted">
+      <i class="bi bi-clock me-1"></i>{{ proximo.data_hora|date:"H:i" }}
+    </p>
+  </div>
+</div>
+{% endif %}
+
+<h2 class="h6 text-muted text-uppercase mb-2">Atalhos</h2>
+<div class="row g-2 mb-4">
+  {% for tile in tiles %}
+  <div class="col-4">
+    <a href="{{ tile.url }}" class="d-block text-center text-decoration-none text-body p-3 bg-white border rounded-3 h-100">
+      <i class="bi {{ tile.icone }} fs-3 d-block mb-1"></i>
+      <span class="small">{{ tile.rotulo }}</span>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 class="h6 text-muted text-uppercase mb-2">Nossos serviços</h2>
+<div class="list-group mb-4">
+  {% for s in servicos %}
+  <a href="{% url 'portal:agendar' %}" class="list-group-item list-group-item-action">
+    <i class="bi bi-bandaid me-2"></i>{{ s }}
+  </a>
+  {% empty %}
+  <div class="list-group-item text-muted">Nenhum serviço cadastrado.</div>
+  {% endfor %}
+</div>
+
+<div class="alert alert-light border">
+  <i class="bi bi-info-circle me-1"></i>
+  Consulte sua agenda, treinos e avaliações diretamente pelo portal.
+  {% if nao_lidas %}<strong>{{ nao_lidas }} notificação(ões) não lida(s).</strong>{% endif %}
+</div>
+
+{% endblock %}

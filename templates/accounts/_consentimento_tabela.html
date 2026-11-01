@@ -1,0 +1,47 @@
+{% if request.META.HTTP_HX_REQUEST %}
+  <div id="messages-container" hx-swap-oob="true">
+    {% include "_messages.html" %}
+  </div>
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Paciente</th>
+        <th>Versão do termo</th>
+        <th>Data</th>
+        <th>Canal</th>
+        <th class="text-center">Situação</th>
+        <th class="text-end">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in consentimentos %}
+        <tr>
+          <td class="fw-semibold">{{ c.paciente.nome_completo }}</td>
+          <td>{{ c.versao_termo }}</td>
+          <td>{{ c.data_assinatura|date:"d/m/Y" }}</td>
+          <td>{{ c.get_canal_display }}</td>
+          <td class="text-center">
+            {% if c.aceito %}
+              <span class="badge badge-success">Aceito</span>
+            {% else %}
+              <span class="badge badge-danger">Revogado/Recusado</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            {% if c.aceito and pode_revogar %}
+              <button class="btn btn-sm btn-claro-danger"
+                      hx-post="{% url 'conta:consentimento_revogar' c.id %}"
+                      hx-confirm="Revogar o consentimento de {{ c.paciente.nome_completo }}? Será criado um novo registro de revogação."
+                      hx-target="#consentimentos-container" hx-swap="innerHTML"><i class="bi bi-x"></i> Revogar</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">Nenhum consentimento registrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

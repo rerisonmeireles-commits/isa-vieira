@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Editar pagamento - Clínica Fisio{% endblock %}
+{% block page_title %}Editar pagamento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card card-kpi mb-3">
+      <div class="card-header bg-white">
+        <span class="fw-semibold">{{ pagamento.conta_receber.paciente.nome_completo }}</span>
+        <span class="text-muted small">
+          - {{ pagamento.get_forma_display }} de R$ {{ pagamento.valor|floatformat:2 }}
+        </span>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label" for="{{ form.valor.id_for_label }}">Valor *</label>
+              {{ form.valor }}{{ form.valor.errors }}
+            </div>
+            <div class="col-md-5">
+              <label class="form-label" for="{{ form.forma.id_for_label }}">Forma</label>
+              {{ form.forma }}{{ form.forma.errors }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+              {{ form.status }}{{ form.status.errors }}
+            </div>
+            <div class="col-3">
+              <label class="form-label" for="{{ form.comprovante.id_for_label }}">Data de pagamento*</label>
+              {{ form.data_pagamento}}{{ form.data_pagamento.errors }}
+            </div>            
+            <div class="col-9">
+              <label class="form-label" for="{{ form.comprovante.id_for_label }}">Comprovante</label>
+              {{ form.comprovante }}{{ form.comprovante.errors }}
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+              {{ form.observacoes }}{{ form.observacoes.errors }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{% url 'financial:ficha_conta' pagamento.conta_receber.pk %}"
+               class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

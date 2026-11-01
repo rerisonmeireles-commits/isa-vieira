@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Avaliação #{{ avaliacao.pk }} - {{ paciente.nome_completo }}{% endblock %}
+{% block page_title %}Avaliação #{{ avaliacao.pk }}: {{ paciente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <div>
+      <i class="bi bi-clipboard2-pulse"></i> {{ avaliacao.get_tipo_display }}
+      <span class="badge {% if avaliacao.status == 'L' %}text-bg-success{% elif avaliacao.status == 'P' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+        {{ avaliacao.get_status_display }}
+      </span>
+    </div>
+    <div class="d-flex gap-2">
+      {% if pode_editar %}
+      <a href="{% url 'clinical:editar_avaliacao' avaliacao.pk %}" class="btn btn-outline-primary btn-sm border-0">
+        <i class="bi bi-pencil"></i> <b>Editar</b>
+      </a>
+      {% endif %}
+      <a href="{% url 'clinical:detalhe_prontuario' paciente.pk %}?aba=avaliacoes"
+         class="btn btn-outline-secondary btn-sm border-0">
+        <i class="bi bi-arrow-left"></i> <b>Voltar</b>
+      </a>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6"><strong>Data:</strong> {{ avaliacao.data|date:"d/m/Y" }}</div>
+      <div class="col-md-6"><strong>Profissional:</strong> {{ avaliacao.profissional }}</div>
+
+      <div class="col-12"><hr class="my-1"></div>
+
+      <div class="col-12"><strong>Queixa Principal</strong><p class="mb-0">{{ avaliacao.queixa_principal|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>História da Doença Atual</strong><p class="mb-0">{{ avaliacao.historia_doenca_atual|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>História Pregressa</strong><p class="mb-0">{{ avaliacao.historia_pregressa|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>Medicamentos em Uso</strong><p class="mb-0">{{ avaliacao.medicamentos_em_uso|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>Exame Físico</strong><p class="mb-0">{{ avaliacao.exame_fisico|default:"-" }}</p></div>
+      <div class="col-md-3"><strong>EVA Dor</strong><p class="mb-0">{{ avaliacao.escalas_eva_dor|default:"-" }}</p></div>
+      <div class="col-md-3"><strong>FIM Total</strong><p class="mb-0">
+        {% if avaliacao.itens_fim.exists %}{{ avaliacao.fim_total }}/126{% else %}-{% endif %}
+      </p></div>
+      <div class="col-md-6"><strong>Hipótese Diagnóstica</strong><p class="mb-0">{{ avaliacao.hipotese_diagnostica|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>Conduta</strong><p class="mb-0">{{ avaliacao.conduta|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>Plano Terapêutico</strong><p class="mb-0">{{ avaliacao.plano_terapeutico|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>Objetivo Curto Prazo</strong><p class="mb-0">{{ avaliacao.objetivo_curto_prazo|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>Objetivo Longo Prazo</strong><p class="mb-0">{{ avaliacao.objetivo_longo_prazo|default:"-" }}</p></div>
+      <div class="col-12"><strong>Observações</strong><p class="mb-0">{{ avaliacao.observacoes|default:"-" }}</p></div>
+    </div>
+
+    {# ===== ESCALA FIM (somente-leitura) ===== #}
+    {% if avaliacao.itens_fim.exists %}
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card card-kpi">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-check"></i> Escala FIM</span>
+            <span class="text-muted small">Total: <strong>{{ avaliacao.fim_total }}/126</strong></span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <h6 class="text-muted text-uppercase small">Domínio Motor (13 itens)</h6>
+                <table class="table table-sm">
+                  <tbody>
+                  {% for item in avaliacao.itens_fim.all %}
+                    {% if item.dominio == 'MOTOR' %}
+                    <tr>
+                      <td>{{ item.get_item_display }}</td>
+                      <td class="text-end" style="width:60px">{{ item.pontuacao|default:"-" }}</td>
+                    </tr>
+                    {% endif %}
+                  {% endfor %}
+                  <tr class="table-light">
+                    <td class="fw-bold">Subtotal Motor</td>
+                    <td class="text-end fw-bold">{{ avaliacao.fim_motor_total }}/91</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted text-uppercase small">Domínio Cognitivo (5 itens)</h6>
+                <table class="table table-sm">
+                  <tbody>
+                  {% for item in avaliacao.itens_fim.all %}
+                    {% if item.dominio == 'COGNITIVO' %}
+                    <tr>
+                      <td>{{ item.get_item_display }}</td>
+                      <td class="text-end" style="width:60px">{{ item.pontuacao|default:"-" }}</td>
+                    </tr>
+                    {% endif %}
+                  {% endfor %}
+                  <tr class="table-light">
+                    <td class="fw-bold">Subtotal Cognitivo</td>
+                    <td class="text-end fw-bold">{{ avaliacao.fim_cognitivo_total }}/35</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== GONIOMETRIA (somente-leitura) ===== #}
+    {% if avaliacao.medicoes_goniometria.exists %}
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <div class="card card-kpi">
+          <div class="card-header bg-white"><i class="bi bi-rulers"></i> Goniometria</div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Articulação</th>
+                  <th>Movimento</th>
+                  <th>Lado</th>
+                  <th class="text-end">Graus</th>
+                  <th>Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for m in avaliacao.medicoes_goniometria.all %}
+                <tr>
+                  <td>{{ m.get_articulacao_display }}</td>
+                  <td>{{ m.get_movimento_display }}</td>
+                  <td>{{ m.get_lado_display }}</td>
+                  <td class="text-end">{{ m.graus }}°</td>
+                  <td>{{ m.observacao|default:"-" }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if avaliacao.status != 'P' %}
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <hr class="my-1">
+        <div class="small text-muted">
+          {% if avaliacao.liberado_por %}
+            <i class="bi bi-check-circle"></i> Liberada por <strong>{{ avaliacao.liberado_por }}</strong>
+            em {{ avaliacao.liberado_em|date:"d/m/Y H:i" }}
+          {% endif %}
+          {% if avaliacao.inativado_por %}
+            · <i class="bi bi-x-circle"></i> Inativada por <strong>{{ avaliacao.inativado_por }}</strong>
+            em {{ avaliacao.inativado_em|date:"d/m/Y H:i" }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

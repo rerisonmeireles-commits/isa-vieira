@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Faturamento - Clínica Fisio{% endblock %}
+{% block page_title %}Faturamento / Convênios{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">{{ total }} faturamento{{ total|pluralize }}</span>
+    {% if pode_editar %}
+      <a href="{% url 'financial:criar_faturamento' %}" class="btn btn-sm btn-outline-primary border-0">
+        <i class="bi bi-plus-lg"></i> <b>Novo faturamento</b>
+      </a>
+    {% endif %}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Período</th>
+          <th>Convênio</th>
+          <th>Valor</th>
+          <th>Guias</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in pagina %}
+          <tr>
+            <td>{{ f.periodo_inicio|date:"d/m/Y" }} a {{ f.periodo_fim|date:"d/m/Y" }}</td>
+            <td>{{ f.convenio.nome|default:"-" }}</td>
+            <td>R$ {{ f.valor_total|floatformat:2 }}</td>
+            <td>{{ f.guias_enviadas }}</td>
+            <td><span class="badge bg-secondary">{{ f.get_status_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">Nenhum faturamento registrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

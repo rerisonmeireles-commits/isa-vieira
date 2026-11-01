@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Nova conta - Clínica Fisio{% endblock %}
+{% block page_title %}Nova conta a receber{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card card-kpi mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.paciente.id_for_label }}">Paciente *</label>
+          {{ form.paciente }}{{ form.paciente.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.convenio.id_for_label }}">Convênio</label>
+          {{ form.convenio }}{{ form.convenio.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.tipo.id_for_label }}">Tipo</label>
+          {{ form.tipo }}{{ form.tipo.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.descricao.id_for_label }}">Descrição</label>
+          {{ form.descricao }}{{ form.descricao.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.valor_total.id_for_label }}">Valor total *</label>
+          {{ form.valor_total }}{{ form.valor_total.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.parcelas.id_for_label }}">Parcelas</label>
+          {{ form.parcelas }}{{ form.parcelas.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.data_vencimento.id_for_label }}">Vencimento *</label>
+          {{ form.data_vencimento }}{{ form.data_vencimento.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}{{ form.status.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.agendamento.id_for_label }}">Agendamento</label>
+          {{ form.agendamento }}{{ form.agendamento.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.forma_pagamento.id_for_label }}">Forma de pagamento</label>
+          {{ form.forma_pagamento }}{{ form.forma_pagamento.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mb-5">
+
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'financial:listar_contas' %}" class="btn btn-outline-secondary">Cancelar</a>
+    
+    {% if pode_editar and pagamento.status == "APROVADO" %}
+      <form method="post"
+            action="{% url 'financial:estornar_pagamento' pagamento.pk %}"
+            class="d-inline m-0 p-0"
+            onsubmit="return confirm('Estornar este pagamento? A conta será recalculada.');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+      </form>
+    {% endif %}
+
+  </div>
+</form>
+{% endblock %}

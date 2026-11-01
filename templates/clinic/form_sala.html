@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{% if sala %}Editar sala{% else %}Nova sala{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if sala %}Editar sala{% else %}Nova sala{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card card-kpi mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.nome.id_for_label }}">Nome *</label>
+          {{ form.nome }}{{ form.nome.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.capacidade.id_for_label }}">Capacidade *</label>
+          {{ form.capacidade }}{{ form.capacidade.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}{{ form.status.errors }}
+        </div>
+        <div class="col-md-9">
+          <label class="form-label" for="{{ form.descricao.id_for_label }}">Descrição</label>
+          {{ form.descricao }}{{ form.descricao.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.cor.id_for_label }}">Cor (agenda)</label>
+          {{ form.cor }}{{ form.cor.errors }}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.equipamentos.id_for_label }}">Equipamentos</label>
+          {{ form.equipamentos }}{{ form.equipamentos.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'clinica:listar_salas' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Novo faturamento - Clínica Fisio{% endblock %}
+{% block page_title %}Novo faturamento{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="card card-kpi mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.convenio.id_for_label }}">Convênio</label>
+          {{ form.convenio }}{{ form.convenio.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.periodo_inicio.id_for_label }}">Início *</label>
+          {{ form.periodo_inicio }}{{ form.periodo_inicio.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.periodo_fim.id_for_label }}">Fim *</label>
+          {{ form.periodo_fim }}{{ form.periodo_fim.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.valor_total.id_for_label }}">Valor total</label>
+          {{ form.valor_total }}{{ form.valor_total.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.guias_enviadas.id_for_label }}">Guias enviadas</label>
+          {{ form.guias_enviadas }}{{ form.guias_enviadas.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}{{ form.status.errors }}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+          {{ form.observacoes }}{{ form.observacoes.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% url 'financial:listar_faturamentos' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+<div id="lote-preview" class="mt-3"></div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Feriados - Clínica Fisio{% endblock %}
+{% block page_title %}Feriados{% endblock %}
+
+{% block content %}
+<div class="card card-kpi mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label small text-muted mb-1">Buscar por descrição</label>
+        <input type="text" name="q" value="{{ busca }}" class="form-control" placeholder="Ex.: Ano Novo">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted mb-1">Tipo</label>
+        <select name="tipo" class="form-select">
+          <option value="">Todos</option>
+          {% for valor, rotulo in tipo_choices %}
+            <option value="{{ valor }}" {% if tipo_filtro == valor %}selected{% endif %}>{{ rotulo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-primary flex-grow-1"><i class="bi bi-search"></i> Filtrar</button>
+        <a href="{% url 'registry:listar_feriados' %}" class="btn btn-outline-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">{{ total }} feriado{{ total|pluralize }}{% if busca %} · busca "{{ busca }}"{% endif %}</span>
+    <a href="{% url 'registry:criar_feriado' %}" class="btn btn-sm btn-outline-primary border-0">
+      <i class="bi bi-plus-lg"></i> <b>Novo feriado</b>
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Localidade</th>
+          <th>Recorrente</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in pagina %}
+          <tr>
+            <td>{{ f.data|date:"d/m/Y" }}</td>
+            <td class="fw-semibold">{{ f.descricao }}</td>
+            <td><span class="badge bade-info">{{ f.get_tipo_display }}</span></td>
+            <td class="text-muted small">
+              {% if f.uf %}{{ f.uf }}{% endif %}{% if f.municipio %} · {{ f.municipio }}{% endif %}{% if not f.uf and not f.municipio %}-{% endif %}
+            </td>
+            <td>
+              {% if f.recorrente %}
+                <span class="badge badge-info">Repete todo ano</span>
+              {% else %}
+                <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'scheduling:liberar_feriado' %}?data={{ f.data|date:'Y-m-d' }}"
+                 class="btn btn-md btn-claro-primary" title="Liberar funcionamento neste feriado">
+                <i class="bi bi-unlock"></i>
+              </a>              
+              <a href="{% url 'registry:editar_feriado' f.pk %}" class="btn btn-md btn-claro-primary" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post" action="{% url 'registry:excluir_feriado' f.pk %}" class="d-inline"
+                    onsubmit="return confirm('Excluir o feriado {{ f.descricao }}?');">
+                {% csrf_token %}
+                <button class="btn btn-md btn-claro-danger" title="Excluir">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">Nenhum feriado encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagina.paginator.num_pages > 1 %}
+    <div class="card-footer bg-white">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+          {% if pagina.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ pagina.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Anterior</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+          {% endif %}
+          <li class="page-item disabled">
+            <span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+          </li>
+          {% if pagina.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ pagina.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">Próxima</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

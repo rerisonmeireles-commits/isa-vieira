@@ -1,0 +1,60 @@
+{% comment %}
+Um card de endereço. Recebe f (form do formset — real ou empty_form).
+{% endcomment %}
+{% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="col-12">
+  <div class="card mb-2">
+    <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="fw-semibold small text-muted">
+        <i class="bi bi-geo-alt me-1"></i>Endereço
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        <div class="form-check form-switch mb-0">
+          {{ f.is_principal }}
+          <label class="form-check-label small" for="{{ f.is_principal.id_for_label }}">Principal</label>
+        </div>
+        <div class="form-check mb-0">
+          {{ f.DELETE }}
+          <label class="form-check-label small text-danger" for="{{ f.DELETE.id_for_label }}">Remover</label>
+        </div>
+      </div>
+    </div>
+    <div class="card-body py-2">
+      <div class="row g-2">
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1" for="{{ f.tipo.id_for_label }}">{{ f.tipo.label }}</label>
+          {{ f.tipo }}{{ f.tipo.errors }}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1" for="{{ f.cep.id_for_label }}">{{ f.cep.label }}</label>
+          {{ f.cep }}{{ f.cep.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1" for="{{ f.logradouro.id_for_label }}">{{ f.logradouro.label }}</label>
+          {{ f.logradouro }}{{ f.logradouro.errors }}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1" for="{{ f.numero.id_for_label }}">{{ f.numero.label }}</label>
+          {{ f.numero }}{{ f.numero.errors }}
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label small mb-1" for="{{ f.complemento.id_for_label }}">{{ f.complemento.label }}</label>
+          {{ f.complemento }}{{ f.complemento.errors }}
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label small mb-1" for="{{ f.bairro.id_for_label }}">{{ f.bairro.label }}</label>
+          {{ f.bairro }}{{ f.bairro.errors }}
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label small mb-1" for="{{ f.cidade.id_for_label }}">{{ f.cidade.label }}</label>
+          {{ f.cidade }}{{ f.cidade.errors }}
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label small mb-1" for="{{ f.uf.id_for_label }}">{{ f.uf.label }}</label>
+          {{ f.uf }}{{ f.uf.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,68 @@
+{% if oob %}<div id="modal-usuario-dialog" hx-swap-oob="innerHTML">{% endif %}
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">{% if usuario %}Editar usuário{% else %}Novo usuário{% endif %}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+  </div>
+  <form hx-post="{% if usuario %}{% url 'conta:usuario_editar' usuario.id %}{% else %}{% url 'conta:usuario_criar' %}{% endif %}"        
+        hx-target="#usuarios-container" hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.xhr.getResponseHeader('X-User-OK')){ bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-usuario')).hide(); }">
+    {% csrf_token %}
+    <div class="modal-body">
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2">{% for erro in form.non_field_errors %}{{ erro }} {% endfor %}</div>
+      {% endif %}
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Login *</label>
+          {{ form.username }}
+          {% for erro in form.username.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">E-mail *</label>
+          {{ form.email }}
+          {% for erro in form.email.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Nome</label>
+          {{ form.first_name }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Sobrenome</label>
+          {{ form.last_name }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">CPF</label>
+          {{ form.documento }}
+          {% for erro in form.documento.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Telefone</label>
+          {{ form.telefone }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Senha</label>
+          {{ form.senha }}
+          <small class="text-muted d-block">{{ form.senha.help_text }}</small>
+          {% for erro in form.senha.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Perfis de acesso</label>
+          {{ form.grupos }}
+          <small class="text-muted d-block">Define o menu e as permissões (RBAC).</small>
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            {{ form.is_active }}
+            <label class="form-check-label small">{{ form.is_active.label }}</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+  </form>
+</div>
+{% if oob %}</div>{% endif %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Consentimentos LGPD{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Consentimentos LGPD</h1>
+  <button class="btn btn-outline-primary btn-sm border-0"
+          hx-get="{% url 'conta:consentimento_criar' %}"
+          hx-target="#modal-consentimento-dialog" hx-swap="innerHTML"
+          hx-on::after-request="bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-consentimento')).show()">
+    <i class="bi bi-plus-lg"></i> <b>Registrar consentimento</b>
+  </button>
+</div>
+
+<form class="row g-2 mb-3"
+      hx-get="{% url 'conta:consentimento_lista' %}"
+      hx-target="#consentimentos-container" hx-swap="innerHTML">
+  <div class="col-md-5">
+    <select name="paciente" class="form-select form-select-sm">
+      <option value="">Todos os pacientes</option>
+      {% for p in pacientes %}
+        <option value="{{ p.id }}" {% if request.GET.paciente == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nome_completo }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-outline-secondary btn-sm w-100">Filtrar</button>
+  </div>
+</form>
+
+<div id="consentimentos-container">
+  {% include "accounts/_consentimento_tabela.html" %}
+</div>
+
+<div class="modal fade" id="modal-consentimento" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" id="modal-consentimento-dialog"></div>
+</div>
+{% endblock %}

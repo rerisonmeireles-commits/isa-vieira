@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{% if paciente %}Editar paciente{% else %}Novo paciente{% endif %} - Clínica Fisio{% endblock %}
+{% block page_title %}{% if paciente %}Editar paciente{% else %}Novo paciente{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="card card-kpi mb-3">
+    <div class="card-header bg-white fw-semibold">Dados pessoais</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.nome_completo.id_for_label }}">Nome completo *</label>
+          {{ form.nome_completo }}{{ form.nome_completo.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.data_nascimento.id_for_label }}">Nascimento</label>
+          {{ form.data_nascimento }}{{ form.data_nascimento.errors }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="{{ form.sexo.id_for_label }}">Sexo</label>
+          {{ form.sexo }}{{ form.sexo.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.cpf.id_for_label }}">CPF</label>
+          {{ form.cpf }}{{ form.cpf.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.rg.id_for_label }}">RG</label>
+          {{ form.rg }}{{ form.rg.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.estado_civil.id_for_label }}">Estado civil</label>
+          {{ form.estado_civil }}{{ form.estado_civil.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-kpi mb-3">
+    <div class="card-header bg-white fw-semibold">Contato e classificação</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.telefone.id_for_label }}">Telefone</label>
+          {{ form.telefone }}{{ form.telefone.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.email.id_for_label }}">E-mail</label>
+          {{ form.email }}{{ form.email.errors }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="{{ form.profissao.id_for_label }}">Profissão</label>
+          {{ form.profissao }}{{ form.profissao.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.origem.id_for_label }}">Origem</label>
+          {{ form.origem }}{{ form.origem.errors }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+          {{ form.status }}{{ form.status.errors }}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+          {{ form.observacoes }}{{ form.observacoes.errors }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "patients/_formset_endereco.html" with formset=enderecos prefix="enderecos" titulo="Endereços" %}  
+  {% include "patients/_formset.html" with formset=contatos prefix="contatos" titulo="Contatos" %}
+  {% include "patients/_formset.html" with formset=emergencias prefix="emergencias" titulo="Contatos de emergência" %}   
+
+  
+  <!-- CONSENTIMENTO LGPD -->
+  {% include "patients/_formset.html" with formset=consentimento prefix="consentimento" titulo="Consentimento LGPD" %}
+    {% if form.consent_aceito %}
+      <div class="secao-consentimento">
+        <h6 class="mb-2"><i class="bi bi-shield-check me-1"></i>Consentimento LGPD</h6>
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Versão do termo</label>
+            {{ form.consent_versao_termo }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Canal</label>
+            {{ form.consent_canal }}
+          </div>
+          <div class="col-md-4">
+            <div class="form-check mt-2">
+              {{ form.consent_aceito }}
+              <label class="form-check-label small">{{ form.consent_aceito.label }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  <div class="d-flex gap-2 mb-5">
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="{% if paciente %}{% url 'patients:ficha' paciente.uuid %}{% else %}{% url 'patients:listar' %}{% endif %}"
+       class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("[data-formset-add]").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      var prefixo = botao.getAttribute("data-formset-add");
+      var total = document.getElementById("id_" + prefixo + "-TOTAL_FORMS");
+      var modelo = document.getElementById("template-" + prefixo);
+      var corpo = document.getElementById("rows-" + prefixo);
+      if (!total || !modelo || !corpo) { return; }
+      corpo.insertAdjacentHTML("beforeend", modelo.innerHTML.replace(/__prefix__/g, total.value));
+      total.value = String(parseInt(total.value, 10) + 1);
+    });
+  });
+});
+</script>
+{% endblock %}

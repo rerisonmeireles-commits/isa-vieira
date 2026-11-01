@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Evolução #{{ evolucao.pk }}{% endblock %}
+{% block page_title %}Evolução #{{ evolucao.pk }} - {{ evolucao.paciente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="card card-kpi">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <div>
+      <i class="bi bi-journal-medical"></i> Evolução SOAP
+      {% if evolucao.atendimento %}
+        <a href="{% url 'attendance:detalhe_atendimento' evolucao.atendimento.pk %}"
+           class="badge text-bg-primary text-decoration-none">
+          Atendimento #{{ evolucao.atendimento.pk }}
+        </a>
+      {% else %}
+        <span class="badge text-bg-secondary">Sem vínculo de sessão</span>
+      {% endif %}
+    </div>
+    <a href="{% url 'clinical:detalhe_prontuario' evolucao.paciente_id %}?aba=evolucoes"
+       class="btn btn-outline-secondary btn-sm">Voltar</a>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4"><strong>Profissional:</strong> {{ evolucao.profissional }}</div>
+      <div class="col-md-4"><strong>Registrada em:</strong> {{ evolucao.created_at|date:"d/m/Y H:i" }}</div>
+      <div class="col-md-4"><strong>Atendimento:</strong>
+        {% if evolucao.atendimento %}#{{ evolucao.atendimento.pk }}{% else %}-{% endif %}
+      </div>
+      <div class="col-12"><hr class="my-1"></div>
+      <div class="col-md-6"><strong>S - Subjetivo</strong><p class="mb-0">{{ evolucao.subjetivo|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>O - Objetivo</strong><p class="mb-0">{{ evolucao.objetivo|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>A - Avaliação</strong><p class="mb-0">{{ evolucao.avaliacao|default:"-" }}</p></div>
+      <div class="col-md-6"><strong>P - Plano</strong><p class="mb-0">{{ evolucao.plano|default:"-" }}</p></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

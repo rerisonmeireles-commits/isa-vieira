@@ -1,0 +1,85 @@
+{# templates/portal/consultas.html                                                #}
+{# Lista de agendamentos do PACIENTE. A view filtra paciente=request.paciente.    #}
+{# Espera no contexto: consultas (queryset de Agendamento).                       #}
+{# Pressupõe consulta.data e consulta.hora_inicio — ver properties no fim.        #}
+{# O link de "agendar" ficou comentado: depende do nome da rota inicial           #}
+{# do fluxo de agendamento no portal, que eu não confirmei.                       #}
+
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Minhas consultas{% endblock %}
+{% block page_title %}Minhas consultas{% endblock %}
+
+{% block content %}
+
+{% if consultas %}
+<p class="text-muted small mb-3">
+  <i class="bi bi-calendar-check"></i>
+  {{ consultas|length }}
+  consulta{{ consultas|length|pluralize }}
+</p>
+{% endif %}
+
+<div class="row g-2">
+
+  {% for c in consultas %}
+  <div class="col-12">
+    <a href="{% url 'portal:consulta_detalhe' c.uuid %}"
+       class="card text-decoration-none shadow-sm h-100">
+      <div class="card-body py-3">
+
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="flex-grow-1">
+
+            <div class="fw-semibold text-dark mb-1">
+              <i class="bi bi-calendar3 text-primary"></i>
+              {{ c.data|date:"d/m/Y" }}
+              {% if c.hora_inicio %}
+                <span class="mx-1">·</span>
+                <i class="bi bi-clock"></i>
+                {{ c.hora_inicio|time:"H:i" }}
+              {% endif %}
+            </div>
+
+            <div class="text-muted small">
+              {{ c.tipo_atendimento|default:"Consulta" }}
+              {% if c.profissional %}
+                <span class="mx-1">·</span>
+                <i class="bi bi-person-badge"></i> {{ c.profissional }}
+              {% endif %}
+            </div>
+
+          </div>
+          <div class="text-end">
+            <span class="badge {{ c.status_css }} fw-normal">{{ c.get_status_display }}</span>
+            <i class="bi bi-chevron-right text-muted d-block mt-2"></i>
+          </div>
+        </div>
+
+      </div>
+    </a>
+  </div>
+
+  {% empty %}
+  <div class="col-12 text-center py-5">
+    <i class="bi bi-calendar-x display-6 text-muted"></i>
+    <p class="text-muted mt-3 mb-1">Nenhuma consulta registrada.</p>
+    <p class="text-muted small mb-0">
+      Fale com a recepção para agendar seu primeiro horário.
+    </p>
+    {# Quando confirmar a rota inicial do fluxo de agendamento, substitua         #}
+    {# a frase acima por:                                                        #}
+    {# <a href="{% url 'portal:agendar' %}" class="btn btn-primary btn-sm mt-3"> #}
+    {#   <i class="bi bi-plus-lg"></i> Agendar consulta                          #}
+    {# </a>                                                                      #}
+  </div>
+  {% endfor %}
+
+</div>
+
+<p class="text-muted small mt-4 mb-0">
+  <i class="bi bi-info-circle"></i>
+  Para remarcar ou cancelar, entre em contato com a clínica.
+</p>
+
+{% endblock %}

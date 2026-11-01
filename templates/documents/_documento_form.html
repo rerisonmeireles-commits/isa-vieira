@@ -1,0 +1,73 @@
+{% if oob %}<div id="modal-documento-dialog" hx-swap-oob="innerHTML">{% endif %}
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">{% if documento %}Editar documento{% else %}Novo documento{% endif %}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+  </div>
+  <form hx-post="{% if documento %}{% url 'documents:documento_editar' documento.id %}{% else %}{% url 'documents:documento_criar' %}{% endif %}{% if request.GET.paciente %}?paciente={{ request.GET.paciente }}{% endif %}"        
+        hx-target="#documentos-container" hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+        hx-on::after-request="if(event.detail.xhr.getResponseHeader('X-Doc-OK')){ bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-documento')).hide(); }">
+    {% csrf_token %}
+    <div class="modal-body">
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2">{% for erro in form.non_field_errors %}{{ erro }} {% endfor %}</div>
+      {% endif %}
+      <div class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Paciente *</label>
+          {{ form.paciente }}
+          {% for erro in form.paciente.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Tipo *</label>
+          {{ form.tipo }}
+          {% for erro in form.tipo.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-12">
+          <label class="form-label small mb-1">Título *</label>
+          {{ form.titulo }}
+          {% for erro in form.titulo.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Arquivo {% if not documento %}*{% endif %}</label>
+          {{ form.arquivo }}
+          {% for erro in form.arquivo.errors %}<small class="text-danger d-block">{{ erro }}</small>{% endfor %}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small mb-1">Data de emissão</label>
+          {{ form.data_emissao }}
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="form-check">
+            {{ form.visivel_paciente }}
+            <label class="form-check-label small">{{ form.visivel_paciente.label }}</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Profissional</label>
+          {{ form.profissional }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label small mb-1">Atendimento (origem)</label>
+          {{ form.atendimento }}
+        </div>
+        <div class="col-12">
+          <div class="form-check">
+            {{ form.assinado }}
+            <label class="form-check-label small">{{ form.assinado.label }}</label>
+          </div>
+        </div>
+        <div class="col-12">
+          <label class="form-label small mb-1">Descrição</label>
+          {{ form.descricao }}
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+  </form>
+</div>
+{% if oob %}</div>{% endif %}

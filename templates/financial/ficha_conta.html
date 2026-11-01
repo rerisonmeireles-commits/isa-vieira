@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Conta a Receber - Clínica Fisio{% endblock %}
+{% block page_title %}Conta a Receber{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h2 class="h4 mb-1">{{ conta.paciente.nome_completo }}</h2>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="badge {% if conta.status == 'PAGA' %}badge-success{% elif conta.status == 'ABERTA' %}badge-warning{% elif conta.status == 'ATRASADA' %}badge-danger{% else %}badge-secondary{% endif %}">
+        {{ conta.get_status_display }}
+      </span>
+      {% if conta.convenio %}<span class="badge badge-info">{{ conta.convenio.nome }}</span>{% endif %}
+      <span class="text-muted small">{{ conta.descricao|default:conta.get_tipo_display }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'financial:listar_contas' %}" class="btn btn-outline-secondary btn-sm border-0"><i class="bi bi-arrow-left"></i> Voltar</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card card-kpi h-100">
+      <div class="card-header bg-white fw-semibold">Resumo</div>     
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-6 text-muted">Valor total</dt><dd class="col-6 fw-bold">R$ {{ conta.valor_total|floatformat:2 }}</dd>
+          <dt class="col-6 text-muted">Total pago</dt><dd class="col-6">R$ {{ total_pago|floatformat:2 }}</dd>
+          <dt class="col-6 text-muted">Saldo</dt><dd class="col-6">R$ {{ saldo|floatformat:2 }}</dd>
+          <dt class="col-6 text-muted">Vencimento</dt><dd class="col-6">{{ conta.data_vencimento|date:"d/m/Y" }}</dd>
+          <dt class="col-6 text-muted">Parcelas</dt><dd class="col-6">{{ conta.parcelas }}</dd>
+        </dl>
+        {% if pode_editar %}
+          <form method="post"
+                action="{% url 'financial:reparcelar_conta' conta.pk %}"
+                class="d-inline-flex align-items-center gap-1 m-0 p-0"
+                onsubmit="return confirm('Substituir esta conta por parcelas? A conta atual será cancelada.');">
+            {% csrf_token %}
+            <input type="number" name="parcelas" min="2" max="12" value="3"
+                  class="form-control form-control-sm" style="width:80px" title="Nº de parcelas">
+            <button type="submit" class="btn btn-sm btn-claro-primary"><i class="bi bi-grid"></i> Reparcelar</button>
+          </form>
+        {% endif %}
+      </div>      
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card card-kpi">
+      <div class="card-header bg-white fw-semibold">Pagamentos</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Data</th><th>Forma</th><th>Valor</th><th>Status</th>
+              <th>Recebido por</th><th class="text-end">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in pagamentos %}
+              <tr>
+                <td>{{ p.data_pagamento|date:"d/m/Y H:i" }}</td>
+                <td>{{ p.get_forma_display }}</td>
+                <td>R$ {{ p.valor|floatformat:2 }}</td>
+                <td>
+                  <span class="badge {% if p.status == 'APROVADO' %}badge-success{% elif p.status == 'PENDENTE' %}badge-warning{% elif p.status == 'RECUSADO' %}bg-danger{% else %}badge-secondary{% endif %}">
+                    {{ p.get_status_display }}
+                  </span>
+                </td>
+                <td>{{ p.recebido_por.get_full_name|default:p.recebido_por.username|default:"-" }}</td>
+                <td class="text-end text-nowrap">
+                  {% if pode_editar %}
+                    {% if p.status == 'PENDENTE' or p.status == 'RECUSADO' %}
+                      <form method="post" action="{% url 'financial:confirmar_pagamento' p.pk %}"
+                            class="d-inline"
+                            onsubmit="return confirm('Confirmar este pagamento?');">
+                        {% csrf_token %}
+                        <button class="btn btn-md btn-claro-success" title="Confirmar pagamento">
+                          <i class="bi bi-check-lg"></i> Confirmar
+                        </button>
+                      </form>
+                    {%elif p.status == "APROVADO" %}
+                      <form method="post"
+                            action="{% url 'financial:estornar_pagamento' p.pk %}"
+                            class="d-inline m-0 p-0"
+                            onsubmit="return confirm('Estornar este pagamento? A conta será recalculada.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-md btn-claro-danger border-0"
+                                title="Estornar pagamento">
+                          <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                      </form>
+                    {%elif p.status != 'ESTORNADO'%}  
+                        <a href="{% url 'financial:editar_pagamento' p.pk %}"
+                          class="btn btn-md btn-claro-primary" title="Editar pagamento">
+                          <i class="bi bi-pencil"></i>
+                        </a>
+                    {% endif %}
+                    
+                  {% endif %}
+
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-3">Nenhum pagamento registrado.</td></tr>
+            {% endfor %}
+          </tbody>
+          
+        </table>
+      </div>
+    </div>
+
+    {% if pode_editar and conta.status != 'PAGA' %}
+      <div class="card card-kpi mt-3">
+        <div class="card-header bg-white fw-semibold">Registrar pagamento</div>
+        <div class="card-body">
+          <form method="post" action="{% url 'financial:baixa_pagamento' conta.pk %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-2">
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Valor</label>
+                {{ pagamento_form.valor }}{{ pagamento_form.valor.errors }}
+              </div>
+              <div class="col-md-5">
+                <label class="form-label small text-muted mb-1">Forma</label>
+                {{ pagamento_form.forma }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Status</label>
+                {{ pagamento_form.status }}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Data Pagamento</label>
+                {{ pagamento_form.data_pagamento }}
+              </div>              
+              <div class="col-md-9">
+                <label class="form-label small text-muted mb-1">Comprovante</label>
+                {{ pagamento_form.comprovante }}
+              </div>
+              <div class="col-12">
+                <label class="form-label small text-muted mb-1">Observações</label>
+                {{ pagamento_form.observacoes }}
+              </div>
+              <div class="col-12">
+                <button class="btn btn-claro-primary btn-sm"><i class="bi bi-currency-dollar"></i> Registrar pagamento</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
