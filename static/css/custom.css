@@ -154,7 +154,7 @@
 .badge-warning        { background: #FFF8DC; color: #c28e0a; padding:  4px; text-align: center; border: 1px solid #CDC8B1; border-radius: 1.50rem; min-width: 100px;}
 .badge-danger         { background: #FFC1C1; color: #8B0000; padding:  4px; text-align: center; border: 1px solid #CD9B9B; border-radius: 1.50rem; min-width: 100px;}
 .badge-primary        { background: #2f6838; color: #d7dbd7; padding:  4px; text-align: center; border: 1px solid #0c641b; border-radius: 1.50rem; min-width: 100px;}
-.badge-secondary      { background: #edebf5; color: #818081; padding:  4px; text-align: center; border: 1px solid #dcd7f3; border-radius: 1.50rem; min-width: 100px;}
+.badge-secondary      { background: #edebf5; color: #3f3a3f; padding:  4px; text-align: center; border: 1px solid #dcd7f3; border-radius: 1.50rem; min-width: 100px;}
 
 
 /* Card de agendamento na grade — estilo profissional */
@@ -178,9 +178,9 @@
 
 
 /* Faixa lateral + fundo sutil por status */
-.pendente-liberacao  { border-radius: 3px; border-left: 2px solid; border-left-color: #ccbf08; background: #f7f7e1; margin-top: 0.1cm; padding: 3px; }
-.liberado-avaliacao  { border-radius: 3px; border-left: 2px solid; border-left-color: #008b8b; background: #eaffff; margin-top: 0.1cm; padding: 3px; color:#131a13}
-.cancelada-avaliacao { border-radius: 3px; border-left: 2px solid; border-left-color: #777575; background: #f04141; margin-top: 0.1cm; padding: 3px; color: #757575; }
+.pendente-liberacao  { border-radius: 3px; border-left: 2px solid; border-left-color: #ccbf08; background: #f3f3e1; margin-top: 0.1cm; padding: 3px; }
+.liberado-avaliacao  { border-radius: 3px; border-left: 2px solid; border-left-color: #008b8b; background: #daf5f5; margin-top: 0.1cm; padding: 3px; color:#131a13}
+.cancelada-avaliacao { border-radius: 3px; border-left: 2px solid; border-left-color: #ad5d5d; background: #f5eeee; margin-top: 0.1cm; padding: 3px; color: #bb3232; }
 
 /* Seção de consentimento no form — mesmo padrão dos cards da grade */
 .secao-consentimento {

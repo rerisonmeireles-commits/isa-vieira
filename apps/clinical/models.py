@@ -144,6 +144,11 @@ class Avaliacao(SoftDeleteModel):
 
 
 class Evolucao(SoftDeleteModel):
+    class Status(models.TextChoices):
+        LIBERADA = "L", "Liberada"
+        PENDENTE = "P", "Pendente de Liberação"
+        INATIVADA = "I", "Inativada"
+
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     paciente = models.ForeignKey(
         "patients.Paciente",
@@ -169,6 +174,19 @@ class Evolucao(SoftDeleteModel):
     objetivo = models.TextField(null=True, blank=True)
     avaliacao = models.TextField(null=True, blank=True)
     plano = models.TextField(null=True, blank=True)
+    
+    #PADRONIZAÇÃO DE MODELOS: status, liberado_por, liberado_em, inativado_por, inativado_em
+    status = models.CharField(max_length=1, choices=Status.choices, default=Status.PENDENTE)
+    liberado_por = models.ForeignKey(
+        "accounts.Usuario", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="evolucoes_liberadas",
+    )
+    liberado_em = models.DateTimeField(null=True, blank=True)
+    inativado_por = models.ForeignKey(
+        "accounts.Usuario", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="evolucoes_inativadas",
+    )
+    inativado_em = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Evolução"
