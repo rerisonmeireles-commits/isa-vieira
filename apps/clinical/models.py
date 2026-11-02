@@ -188,6 +188,16 @@ class Evolucao(SoftDeleteModel):
     )
     inativado_em = models.DateTimeField(null=True, blank=True)
 
+    # Retificação: uma evolução pode retificar outra evolução (auto-referencial).
+    retifica_evolucao = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="retificacoes",
+    )
+    retificada_em = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         verbose_name = "Evolução"
         verbose_name_plural = "Evoluções"
@@ -195,6 +205,41 @@ class Evolucao(SoftDeleteModel):
         indexes = [
             models.Index(fields=["paciente", "created_at"]),
             models.Index(fields=["atendimento"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(status="L", liberado_por__isnull=False, liberado_em__isnull=False)
+                    | ~models.Q(status="L")
+                ),
+                name="ck_evolucao_liberada_com_rastreio",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(status="I", inativado_por__isnull=False, inativado_em__isnull=False)
+                    | ~models.Q(status="I")
+                ),
+                name="ck_evolucao_inativada_com_rastreio",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(retifica_evolucao__isnull=False, retificada_em__isnull=True)
+                    | models.Q(retifica_evolucao__isnull=True)
+                ),
+                name="ck_evolucao_retificacao_sem_cascata",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    ~models.Q(retifica_evolucao=models.F("id"))
+                    | models.Q(retifica_evolucao__isnull=True)
+                ),
+                name="ck_evolucao_retificacao_nao_autoreferente",
+            ),
+            models.UniqueConstraint(
+                fields=["retifica_evolucao"],
+                condition=models.Q(retifica_evolucao__isnull=False),
+                name="ck_evolucao_retificacao_unica",
+            ),
         ]
 
     def __str__(self):
