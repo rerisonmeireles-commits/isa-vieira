@@ -20,7 +20,7 @@ class ContatoEmergenciaInline(admin.TabularInline):
 
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
-    list_display = ("nome_completo", "cpf", "telefone", "origem", "status")
+    list_display = ("nome_completo", "cpf", "telefone", "origem", "user", "status")
     list_filter = ("status", "origem", "sexo")
     search_fields = ("nome_completo", "cpf", "email")
     inlines = [EnderecoInline, ContatoInline, ContatoEmergenciaInline]
