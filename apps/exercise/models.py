@@ -72,6 +72,11 @@ class Prescricao(SoftDeleteModel):
 
 
 class PrescricaoExercicio(models.Model):
+    """Item de uma prescrição.
+
+    Não implementa soft delete: a remoção lógica é feita via ativo=False.
+    Prescricao e ExecucaoExercicio têm deleted_at; este model não.
+    """    
     prescricao = models.ForeignKey(Prescricao, on_delete=models.PROTECT, related_name="itens")
     exercicio = models.ForeignKey(Exercicio, on_delete=models.PROTECT, related_name="prescricoes")
     ordem = models.PositiveSmallIntegerField(default=1)

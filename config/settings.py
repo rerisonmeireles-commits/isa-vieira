@@ -1,4 +1,6 @@
 import os
+import sys
+
 from pathlib import Path
 
 import environ
@@ -193,3 +195,6 @@ if not DEBUG:
     CSRF_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     CSRF_COOKIE_SAMESITE = "Lax"
+
+if "test" in sys.argv:
+    DATABASES["default"]["CONN_MAX_AGE"] = 0    

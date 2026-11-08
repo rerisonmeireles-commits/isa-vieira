@@ -25,3 +25,7 @@ local_settings.py
 .vscode/
 .idea/
 *.swp
+
+#tests
+verificar_constraints.py
+tests.py

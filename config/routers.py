@@ -1,24 +1,30 @@
 class TestDatabaseRouter:
-    """Impede que o alias 'migrations' seja usado em testes.
+    """Em testes, tudo vai para o alias 'default'.
 
-    O Django cria dois bancos de teste quando há dois aliases — um para
-    'default' e outro para 'migrations'. Como o 'migrations' aponta para
-    o fisio_owner, ele tenta criar um segundo banco e falha. Este router
-    força o uso do 'default' em testes.
+    O TestCase do Django só gerencia transações no 'default'. Se o router
+    devolver 'migrations' durante os testes, a conexão desse alias é
+    fechada entre testes e o seguinte falha com
+    OperationalError: the connection is closed.
     """
 
+    def _is_testing(self):
+        import sys
+        return "test" in sys.argv
+
     def db_for_read(self, model, **hints):
+        if self._is_testing():
+            return "default"
         return None
 
     def db_for_write(self, model, **hints):
+        if self._is_testing():
+            return "default"
         return None
 
     def allow_relation(self, obj1, obj2, **hints):
         return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        # Em testes, só o 'default' é migrado
-        import sys
-        if "test" in sys.argv:
+        if self._is_testing():
             return db == "default"
         return None
