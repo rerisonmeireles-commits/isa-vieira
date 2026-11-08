@@ -60,7 +60,10 @@ def home(request):
     )
 
     servicos = TipoAtendimento.objects.filter(ativo=True, deleted_at__isnull=True)
-    nao_lidas = Notificacao.objects.filter(destinatario=request.user, lida=False).count()
+    nao_lidas = Notificacao.objects.filter(
+        destinatario=request.user,
+        lida=False,
+    ).count()
 
     tiles = [
         {"rotulo": "Agendar", "icone": "bi-calendar-plus", "url": reverse("portal:agendar")},
@@ -295,11 +298,16 @@ def equipe(request):
     profissionais = Profissional.objects.filter(status="ATIVO").order_by("nome_completo")
     return render(request, "portal/equipe.html", {"profissionais": profissionais})
 
-
 @portal_required
 def perfil(request):
+    registrar_auditoria(
+        usuario=request.user,
+        acao="ACESSO_PERFIL_PORTAL",
+        tabela="paciente",
+        registro_id=request.paciente.pk,
+        request=request,
+    )
     return render(request, "portal/perfil.html", {"paciente": request.paciente})
-
 
 @portal_required
 def contato(request):

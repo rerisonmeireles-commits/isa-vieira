@@ -1,5 +1,4 @@
-"""Testes de isolamento do portal do paciente — consulta, avaliação,
-evolução e cancelamento.
+"""Testes de isolamento do portal do paciente.
 
 Prova o padrão de segurança do portal: toda view filtra por
 `paciente=request.paciente` na própria query, devolvendo 404 uniforme
@@ -13,6 +12,9 @@ Notas de fixture:
   liberado_em (CHECK ck_*_liberada_com_rastreio).
 - A agenda é criada com 3 dias de antecedência para que
   Agendamento.pode_cancelar não bloqueie por janela mínima.
+- Notificacao NÃO tem FK para paciente: o escopo é por `destinatario`
+  (Usuario). Como Paciente.user é OneToOneField, um user = um paciente,
+  então o contador de home() é seguro por construção.
 """
 from datetime import time, timedelta
 
@@ -25,6 +27,7 @@ from apps.accounts.constants import GRUPO_PACIENTE
 from apps.accounts.models import Usuario
 from apps.clinic.models import TipoAtendimento
 from apps.clinical.models import Avaliacao, Evolucao
+from apps.communication.models import Notificacao
 from apps.patients.models import Paciente, PacienteProfissional
 from apps.professionals.models import Profissional
 from apps.registry.models import ConselhoProfissional
@@ -113,6 +116,15 @@ class PortalIsolamentoBase(TestCase):
         slot.save(update_fields=["status", "updated_at"])
         return agendamento
 
+    def _criar_slot_extra(self, hora_inicio, hora_fim):
+        """Cria slot adicional na mesma agenda (para o segundo paciente)."""
+        return SlotAgenda.objects.create(
+            agenda=self.agenda,
+            hora_inicio=hora_inicio,
+            hora_fim=hora_fim,
+            status=SlotAgenda.Status.LIVRE,
+        )
+
 
 class ConsultaIsolamentoTests(PortalIsolamentoBase):
     """Isolamento em consultas (agendamentos)."""
@@ -135,13 +147,7 @@ class ConsultaIsolamentoTests(PortalIsolamentoBase):
 
     def test_listagem_so_mostra_consultas_do_paciente(self):
         ag_a = self._criar_agendamento(self.paciente_a)
-
-        slot_b = SlotAgenda.objects.create(
-            agenda=self.agenda,
-            hora_inicio=time(11, 0),
-            hora_fim=time(11, 50),
-            status=SlotAgenda.Status.LIVRE,
-        )
+        slot_b = self._criar_slot_extra(time(11, 0), time(11, 50))
         ag_b = self._criar_agendamento(self.paciente_b, slot=slot_b)
 
         self.client.force_login(self.user_a)
@@ -306,14 +312,24 @@ class EvolucaoIsolamentoTests(PortalIsolamentoBase):
 
 
 class AcessoBasicoTests(PortalIsolamentoBase):
-    """Guarda de acesso: usuário sem vínculo e não autenticado."""
+    """Guarda de acesso: usuário sem vínculo, soft-deletado e anônimo."""
 
     def test_usuario_sem_vinculo_recebe_403(self):
         user_sem_vinculo = Usuario.objects.create_user(
             username="sem_vinculo", email="s@test.local", password="x",
         )
         user_sem_vinculo.groups.add(Group.objects.get(name=GRUPO_PACIENTE))
+
         self.client.force_login(user_sem_vinculo)
+        resposta = self.client.get(reverse("portal:consultas"))
+        self.assertEqual(resposta.status_code, 403)
+
+    def test_paciente_soft_deletado_recebe_403(self):
+        """Paciente com deleted_at preenchido é tratado como sem vínculo."""
+        self.paciente_a.deleted_at = timezone.now()
+        self.paciente_a.save(update_fields=["deleted_at"])
+
+        self.client.force_login(self.user_a)
         resposta = self.client.get(reverse("portal:consultas"))
         self.assertEqual(resposta.status_code, 403)
 
@@ -323,7 +339,8 @@ class AcessoBasicoTests(PortalIsolamentoBase):
         self.assertIn("/conta/", resposta.url)
 
     def test_contato_nao_permite_destinatario_arbitrario(self):
-        """O paciente só pode enviar mensagem para profissionais da sua equipe."""
+        """Profissional fora da equipe é rejeitado — view re-renderiza
+        com erro e NÃO cria notificação para o destinatário."""
         profissional_externo = Profissional.objects.create(
             nome_completo="Fisio Externo",
             user=Usuario.objects.create_user(username="ext", password="x"),
@@ -331,23 +348,93 @@ class AcessoBasicoTests(PortalIsolamentoBase):
             registro_conselho="999999-F",
             status=Profissional.Status.ATIVO,
         )
+
         self.client.force_login(self.user_a)
         resposta = self.client.post(reverse("portal:contato"), {
             "destinatario": profissional_externo.pk,
             "corpo": "Mensagem indevida",
         })
-        # Hoje isso passa. Deveria ser bloqueado.
-        self.assertNotEqual(resposta.status_code, 302)   
-             
+
+        # Re-renderiza o formulário com erro — não redireciona.
+        self.assertEqual(resposta.status_code, 200)
+        # E o bloqueio é real: nenhuma notificação foi criada.
+        self.assertFalse(
+            Notificacao.objects.filter(
+                destinatario=profissional_externo.user,
+            ).exists()
+        )
+
     def test_contato_permite_destinatario_da_equipe(self):
         PacienteProfissional.objects.create(
             paciente=self.paciente_a,
             profissional=self.profissional,
             ativo=True,
         )
+
         self.client.force_login(self.user_a)
         resposta = self.client.post(reverse("portal:contato"), {
             "destinatario": self.profissional.pk,
             "corpo": "Gostaria de remarcar minha sessão.",
         })
-        self.assertEqual(resposta.status_code, 302) 
+        self.assertEqual(resposta.status_code, 302)
+
+
+class HomePerfilIsolamentoTests(PortalIsolamentoBase):
+    """home() e perfil() não vazam dados entre pacientes.
+
+    Notificacao não tem FK para paciente: o escopo é por `destinatario`.
+    Como Paciente.user é OneToOneField, um user = um paciente — então
+    o contador por destinatario já é seguro por construção.
+    """
+
+    def _criar_notificacao(self, destinatario, lida=False, titulo="Notificação"):
+        return Notificacao.objects.create(
+            destinatario=destinatario,
+            tipo=Notificacao.Tipo.SISTEMA,
+            titulo=titulo,
+            mensagem="Mensagem de teste.",
+            lida=lida,
+        )
+
+    def test_home_conta_apenas_notificacoes_nao_lidas_do_usuario(self):
+        """O contador reflete só notificações não lidas do user logado."""
+        self._criar_notificacao(self.user_a, lida=False, titulo="A não lida")
+        self._criar_notificacao(self.user_a, lida=True, titulo="A lida")
+        self._criar_notificacao(self.user_b, lida=False, titulo="B não lida")
+
+        self.client.force_login(self.user_a)
+        resposta = self.client.get(reverse("portal:home"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context["nao_lidas"], 1)
+
+    def test_home_nao_mostra_agendamento_de_outro_paciente(self):
+        """Agendamento de B não aparece como 'próximo' para A."""
+        self._criar_agendamento(self.paciente_b)
+
+        self.client.force_login(self.user_a)
+        resposta = self.client.get(reverse("portal:home"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertIsNone(resposta.context["proximo"])
+
+    def test_home_mostra_agendamento_do_proprio_paciente(self):
+        """Par positivo do teste acima: sem ele, o negativo passa mesmo
+        se home() estiver quebrada e nunca mostrar nada."""
+        ag = self._criar_agendamento(self.paciente_a)
+
+        self.client.force_login(self.user_a)
+        resposta = self.client.get(reverse("portal:home"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context["proximo"], ag)
+
+    def test_perfil_exibe_paciente_do_usuario_logado(self):
+        self.client.force_login(self.user_a)
+        resposta = self.client.get(reverse("portal:perfil"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context["paciente"], self.paciente_a)
+
+    def test_perfil_de_outro_paciente_nao_e_acessivel(self):
+        """perfil() não aceita uuid — sempre o do usuário logado."""
+        self.client.force_login(self.user_b)
+        resposta = self.client.get(reverse("portal:perfil"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context["paciente"], self.paciente_b)
