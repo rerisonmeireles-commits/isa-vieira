@@ -130,3 +130,105 @@ class ContatoEmergencia(models.Model):
 
     def __str__(self):
         return f"{self.nome} ({self.telefone})"
+
+class PacienteProfissional(models.Model):
+    """Vínculo explícito entre paciente e profissional da equipe.
+
+    Substitui a derivação por Agendamento. Permite papel clínico,
+    vigência e histórico de vínculos encerrados.
+    """
+
+    class Papel(models.TextChoices):
+        REFERENCIA = "R", "Profissional de referência"
+        EQUIPE = "E", "Equipe de atendimento"
+        INTERCONSULTA = "I", "Interconsulta"
+
+    paciente = models.ForeignKey(
+        "patients.Paciente",
+        on_delete=models.PROTECT,
+        related_name="vinculos_profissionais",
+    )
+    profissional = models.ForeignKey(
+        "professionals.Profissional",
+        on_delete=models.PROTECT,
+        related_name="vinculos_pacientes",
+    )
+    papel = models.CharField(
+        max_length=1,
+        choices=Papel.choices,
+        default=Papel.EQUIPE,
+    )
+    ativo = models.BooleanField(default=True)
+    inicio_vigencia = models.DateField(default=timezone.localdate)
+    fim_vigencia = models.DateField(null=True, blank=True)
+    criado_por = models.ForeignKey(
+        "accounts.Usuario",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    observacoes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Vínculo paciente-profissional"
+        verbose_name_plural = "Vínculos paciente-profissional"
+        constraints = [
+            # Um paciente não pode ter dois vínculos ativos com o mesmo
+            # profissional. Índice parcial: só vale para ativo=True.
+            models.UniqueConstraint(
+                fields=["paciente", "profissional"],
+                condition=models.Q(ativo=True, deleted_at__isnull=True),
+                name="uq_vinculo_ativo_paciente_profissional",
+            ),
+            # Coerência de vigência: fim não pode ser anterior ao início.
+            models.CheckConstraint(
+                check=models.Q(fim_vigencia__isnull=True)                
+                | models.Q(fim_vigencia__gte=models.F("inicio_vigencia")),                                
+                name="ck_vinculo_vigencia_coerente",
+            ),
+            models.CheckConstraint(
+                check=models.Q(ativo=False) | models.Q(fim_vigencia__isnull=True),
+                name="ck_vinculo_ativo_sem_fim",
+            )            
+            
+        ]
+        indexes = [
+            models.Index(
+                fields=["paciente", "ativo"],
+                name="ix_vinculo_paciente_ativo",
+            ),
+            models.Index(
+                fields=["profissional", "ativo"],
+                name="ix_vinculo_profissional_ativo",
+            ),
+        ]    
+
+    def encerrar(self, *, em=None):
+        """Encerra o vínculo de forma atômica.
+        Garante a invariante: ativo=False + fim_vigencia preenchido.
+        Sem este método, é fácil setar ativo=False e esquecer o
+        fim_vigencia, deixando o vínculo em estado inconsistente.
+
+        Args:
+            em: data de encerramento. Default: hoje.
+        """    
+        if not self.ativo:
+            return
+        self.ativo = False
+        self.fim_vigencia = em or timezone.localdate()
+        self.save(update_fields=["ativo", "fim_vigencia", "updated_at"])
+
+    def reativar(self):
+        """Reativa um vínculo encerrado.
+
+        Limpa fim_vigencia para respeitar ck_vinculo_ativo_sem_fim.
+        """
+        if self.ativo:
+            return
+        self.ativo = True
+        self.fim_vigencia = None
+        self.save(update_fields=["ativo", "fim_vigencia", "updated_at"])            
