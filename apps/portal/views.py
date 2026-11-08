@@ -233,7 +233,13 @@ def documento_download(request, uuid):
         visivel_paciente=True,
         deleted_at__isnull=True,
     )
-
+    registrar_auditoria(
+        usuario=request.user,
+        acao="DOWNLOAD_DOCUMENTO",
+        tabela="documento",
+        registro_id=documento.pk,
+        request=request,
+    )
     nome = os.path.basename(documento.arquivo.name)
     return FileResponse(
         documento.arquivo.open("rb"),
@@ -262,11 +268,39 @@ def evolucao(request):
         .select_related("atendimento", "profissional")
         .order_by("-created_at")
     )
+    if not request.session.get("evolucao_auditada"):
+        registrar_auditoria(
+            usuario=request.user,
+            acao="ACESSO_EVOLUCAO",
+            tabela="paciente",
+            registro_id=request.paciente.pk,
+            request=request,
+        )
+        request.session["evolucao_auditada"] = True    
+    
     return render(request, "portal/evolucao.html", {"evolucoes": evolucoes})
 
 
 @portal_required
 def avaliacoes(request):
+    """Lista as avaliações liberadas do paciente.
+
+    Registra acesso em log_auditoria (§1.5): fichas de avaliação
+    física/funcional são dado clínico sensível.
+
+    Audita UMA VEZ POR SESSÃO — a lista é reaberta com frequência e
+    o valor probatório está no primeiro acesso, não em cada recarga.
+    """
+    if not request.session.get("avaliacoes_auditadas"):
+        registrar_auditoria(
+            usuario=request.user,
+            acao="ACESSO_AVALIACAO",
+            tabela="paciente",
+            registro_id=request.paciente.pk,
+            request=request,
+        )
+        request.session["avaliacoes_auditadas"] = True
+
     avaliacoes_qs = (
         Avaliacao.objects.filter(
             paciente=request.paciente,
@@ -300,13 +334,30 @@ def equipe(request):
 
 @portal_required
 def perfil(request):
-    registrar_auditoria(
-        usuario=request.user,
-        acao="ACESSO_PERFIL_PORTAL",
-        tabela="paciente",
-        registro_id=request.paciente.pk,
-        request=request,
-    )
+    """Exibe os dados cadastrais do paciente logado.
+
+    Registra acesso em log_auditoria (§1.5): o perfil expõe CPF,
+    endereço e contato de emergência — dados sensíveis sob LGPD.
+
+    Ação de LEITURA: dados_antes/dados_depois ficam vazios.
+
+    Audita UMA VEZ POR SESSÃO (flag em request.session) em vez de a
+    cada request: a LGPD exige rastreabilidade de acesso, não
+    granularidade por clique. Sem a flag, um paciente que recarrega
+    o perfil 15x/dia geraria 15 linhas — ruído que esconde os eventos
+    que realmente importam na trilha (cancelamentos, liberações,
+    retificações).
+    """
+    if not request.session.get("perfil_auditado"):
+        registrar_auditoria(
+            usuario=request.user,
+            acao="ACESSO_PERFIL",
+            tabela="paciente",
+            registro_id=request.paciente.pk,
+            request=request,
+        )
+        request.session["perfil_auditado"] = True
+
     return render(request, "portal/perfil.html", {"paciente": request.paciente})
 
 @portal_required
