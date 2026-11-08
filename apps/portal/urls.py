@@ -20,11 +20,15 @@ urlpatterns = [
     path("perfil/", views.perfil, name="perfil"),
 
     path("agendar/", views.agendar, name="agendar"),
+    path("agendamentos/", views.AgendamentosFuturosView.as_view(), name="agendamentos_futuros"),
     path("agendar/<int:tipo_id>/profissional/", views.agendar_profissional, name="agendar_profissional"),
     path("agendar/<int:tipo_id>/profissional/<int:profissional_id>/", views.agendar_horario, name="agendar_horario"),
     path("agendar/<int:tipo_id>/profissional/<int:profissional_id>/<str:data>/slots/", views.agendar_slots, name="agendar_slots"),
     path("agendar/confirmar/", views.agendar_confirmar, name="agendar_confirmar"),
-    
-    path("treinos/", views.em_breve, name="treinos"),
+
+    path("treinos/", views.treinos, name="treinos"),
+    path("treinos/<uuid:uuid>/", views.treino_detalhe, name="treino_detalhe"),
+    path("treinos/<uuid:uuid>/executar/<int:item_id>/",views.executar_exercicio,name="executar_exercicio"),    
+
     path("notificacoes/", views.em_breve, name="notificacoes"),
 ]

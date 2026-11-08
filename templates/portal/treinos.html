@@ -1,0 +1,30 @@
+{% extends "portal/base_portal.html" %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">Meus Treinos</h1>
+
+{% if prescricoes %}
+  <div class="space-y-4">
+    {% for p in prescricoes %}
+      <a href="{% url 'portal:treino_detalhe' p.uuid %}"
+         class="block p-4 border rounded-lg hover:bg-gray-50">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="font-medium">{{ p.objetivo|default:"Prescrição de exercícios" }}</p>
+            <p class="text-sm text-gray-600">
+              {{ p.profissional.nome_completo }} · {{ p.data|date:"d/m/Y" }}
+            </p>
+          </div>
+          <span class="text-sm text-gray-500">
+            {{ p.itens.count }} exercício{{ p.itens.count|pluralize }}
+          </span>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-gray-600">
+    Você ainda não tem treinos prescritos.
+    Eles aparecem aqui após a primeira avaliação.
+  </p>
+{% endif %}
+{% endblock %}

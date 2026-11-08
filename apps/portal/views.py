@@ -20,6 +20,7 @@ from apps.clinical.models import Avaliacao, Evolucao
 from apps.communication.models import Notificacao
 from apps.communication.services import enviar_mensagem
 from apps.documents.models import Documento
+from apps.exercise.models import Prescricao, ExecucaoExercicio, PrescricaoExercicio
 from apps.portal.helpers import portal_required
 from apps.portal.mixins import PacienteScopedMixin
 from apps.portal.services import PortalAgendaError, reservar_para_paciente
@@ -584,3 +585,107 @@ class AgendamentosFuturosView(PacienteScopedMixin, ListView):
             )
             .order_by("slot__agenda__data", "slot__hora_inicio")
         )
+
+#─────────────────────────────────────────────────────────────
+#EXECUÇÃO DE EXERCÍCIOS
+#─────────────────────────────────────────────────────────────
+@portal_required
+def treinos(request):
+    """Lista as prescrições ativas do paciente."""
+    hoje = timezone.localdate()
+
+    prescricoes = (
+        Prescricao.objects.filter(
+            paciente=request.paciente,
+            deleted_at__isnull=True,
+            status=Prescricao.Status.ATIVA,
+        )
+        .filter(
+            Q(data_validade__isnull=True) | Q(data_validade__gte=hoje)
+        )
+        .select_related("profissional")
+        .prefetch_related("itens__exercicio")
+        .order_by("-data", "-created_at")
+    )
+
+    return render(
+        request,
+        "portal/treinos.html",
+        {"prescricoes": prescricoes},
+    )
+
+
+@portal_required
+def treino_detalhe(request, uuid):
+    """Detalhe de uma prescrição — 404 uniforme se não for do paciente."""
+    prescricao = get_object_or_404(
+        Prescricao.objects.filter(
+            deleted_at__isnull=True,
+            status=Prescricao.Status.ATIVA,
+        ).select_related("profissional"),
+        uuid=uuid,
+        paciente=request.paciente,
+    )
+
+    # PrescricaoExercicio NÃO tem deleted_at — só o flag ativo.
+    itens = (
+        prescricao.itens.filter(ativo=True)
+        .select_related("exercicio")
+        .order_by("ordem")
+    )
+
+    # ExecucaoExercicio TEM deleted_at.
+    executados = set(
+        ExecucaoExercicio.objects.filter(
+            prescricao_exercicio__in=itens,
+            deleted_at__isnull=True,
+        ).values_list("prescricao_exercicio_id", flat=True)
+    )
+
+    return render(
+        request,
+        "portal/treino_detalhe.html",
+        {
+            "prescricao": prescricao,
+            "itens": itens,
+            "executados": executados,
+        },
+    )
+
+
+@portal_required
+@require_POST
+def executar_exercicio(request, uuid, item_id):
+    """Registra a execução de um exercício pelo paciente."""
+    item = get_object_or_404(
+        PrescricaoExercicio.objects.filter(
+            prescricao__deleted_at__isnull=True,
+            prescricao__status=Prescricao.Status.ATIVA,
+            prescricao__paciente=request.paciente,
+            ativo=True,
+        ).select_related("prescricao", "exercicio"),
+        pk=item_id,
+        prescricao__uuid=uuid,
+    )
+
+    series = request.POST.get("series_feitas", "").strip()
+    repeticoes = request.POST.get("repeticoes_feitas", "").strip()
+    esforco = request.POST.get("percepcao_esforco", "").strip()
+    dor = request.POST.get("dor_eva", "").strip()
+    observacoes = request.POST.get("observacoes", "").strip()
+
+    ExecucaoExercicio.objects.create(
+        prescricao_exercicio=item,
+        paciente=request.paciente,
+        data=timezone.localdate(),
+        realizado=True,
+        series_feitas=int(series) if series.isdigit() else None,
+        repeticoes_feitas=repeticoes or None,
+        percepcao_esforco=int(esforco) if esforco.isdigit() else None,
+        dor_eva=int(dor) if dor.isdigit() else None,
+        observacoes=observacoes or None,
+        criado_via=ExecucaoExercicio.CriadoVia.PORTAL,
+    )
+
+    messages.success(request, f"Exercício «{item.exercicio.nome}» registrado.")
+    return redirect("portal:treino_detalhe", uuid=item.prescricao.uuid)
