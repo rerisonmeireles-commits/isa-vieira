@@ -24,6 +24,7 @@ from apps.exercise.models import Prescricao, ExecucaoExercicio, PrescricaoExerci
 from apps.portal.helpers import portal_required
 from apps.portal.mixins import PacienteScopedMixin
 from apps.portal.services import PortalAgendaError, reservar_para_paciente
+from apps.portal.decorators import audita_acesso
 from apps.professionals.models import Profissional
 from apps.scheduling.models import Agendamento, Agenda, SlotAgenda
 from apps.scheduling.services.geracao_slots import gerar_slots_do_dia
@@ -99,12 +100,21 @@ def consultas(request):
 
 
 @portal_required
+@audita_acesso(
+    "ACESSO_CONSULTA", "agendamento",
+    por_sessao=False,
+    auditar_apos_view=True,
+)
 def consulta_detalhe(request, uuid):
     """Detalhe de uma consulta do paciente.
 
     O filtro de dono vai na query, nunca num `if` posterior: devolve 404
     uniforme e não revela se o uuid existe. AgendamentoManager já filtra
     deleted_at, então não repita o filtro aqui.
+
+    Auditoria (§1.5): registra acesso a dado de agendamento — profissional,
+    sala, tipo de atendimento e histórico. por_sessao=False porque o
+    detalhe é aberto deliberadamente, não é listagem recarregada.
     """
     consulta = get_object_or_404(
         Agendamento.objects.select_related(
@@ -113,7 +123,11 @@ def consulta_detalhe(request, uuid):
         uuid=uuid,
         paciente=request.paciente,
     )
+    # O decorator audita DEPOIS da view: só aqui o agendamento existe.
+    request.auditoria_registro_id = consulta.pk
+
     return render(request, "portal/consulta_detalhe.html", {"consulta": consulta})
+
 
 
 @portal_required
@@ -218,14 +232,12 @@ def documentos(request):
 
 
 @portal_required
+@audita_acesso(
+    "DOWNLOAD_DOCUMENTO", "documento",
+    por_sessao=False,
+    auditar_apos_view=True,
+)
 def documento_download(request, uuid):
-    """Serve o arquivo do documento com validação de dono + visibilidade.
-
-    Revalida no momento do download (não só na listagem): se o profissional
-    revogar `visivel_paciente` depois, o link antigo deixa de funcionar.
-    O get_object_or_404 já filtra visivel_paciente=True — 404 uniforme é
-    a política correta contra enumeração de uuid.
-    """
     documento = get_object_or_404(
         Documento,
         uuid=uuid,
@@ -233,18 +245,14 @@ def documento_download(request, uuid):
         visivel_paciente=True,
         deleted_at__isnull=True,
     )
-    registrar_auditoria(
-        usuario=request.user,
-        acao="DOWNLOAD_DOCUMENTO",
-        tabela="documento",
-        registro_id=documento.pk,
-        request=request,
-    )
+    # O decorator audita DEPOIS da view: só aqui o documento existe.
+    request.auditoria_registro_id = documento.pk
+
     nome = os.path.basename(documento.arquivo.name)
     return FileResponse(
         documento.arquivo.open("rb"),
-        as_attachment=True,
         filename=nome,
+        as_attachment=True,
     )
 
 
@@ -313,13 +321,27 @@ def avaliacoes(request):
 
 
 @portal_required
+@audita_acesso(
+    "ACESSO_AVALIACAO_DET", "avaliacao",
+    por_sessao=False,
+    auditar_apos_view=True,
+)
 def avaliacao_detalhe(request, uuid):
+    """Detalhe de uma avaliação liberada do paciente.
+
+    Auditoria (§1.5): ficha de avaliação física/funcional é prontuário
+    clínico puro — o caso mais crítico da especificação. O registro_id
+    aponta para a AVALIAÇÃO específica, não para o paciente: a trilha
+    precisa responder "qual ficha foi aberta", não só "quem acessou".
+    """
     avaliacao = get_object_or_404(
         Avaliacao,
         uuid=uuid,
         paciente=request.paciente,
         status=Avaliacao.Status.LIBERADA,
     )
+    request.auditoria_registro_id = avaliacao.pk
+
     return render(request, "portal/avaliacao_detalhe.html", {"avaliacao": avaliacao})
 
 
@@ -333,32 +355,24 @@ def equipe(request):
     return render(request, "portal/equipe.html", {"profissionais": profissionais})
 
 @portal_required
+@audita_acesso("ACESSO_PERFIL", "paciente")
 def perfil(request):
-    """Exibe os dados cadastrais do paciente logado.
-
-    Registra acesso em log_auditoria (§1.5): o perfil expõe CPF,
-    endereço e contato de emergência — dados sensíveis sob LGPD.
-
-    Ação de LEITURA: dados_antes/dados_depois ficam vazios.
-
-    Audita UMA VEZ POR SESSÃO (flag em request.session) em vez de a
-    cada request: a LGPD exige rastreabilidade de acesso, não
-    granularidade por clique. Sem a flag, um paciente que recarrega
-    o perfil 15x/dia geraria 15 linhas — ruído que esconde os eventos
-    que realmente importam na trilha (cancelamentos, liberações,
-    retificações).
-    """
-    if not request.session.get("perfil_auditado"):
-        registrar_auditoria(
-            usuario=request.user,
-            acao="ACESSO_PERFIL",
-            tabela="paciente",
-            registro_id=request.paciente.pk,
-            request=request,
-        )
-        request.session["perfil_auditado"] = True
-
     return render(request, "portal/perfil.html", {"paciente": request.paciente})
+
+
+@portal_required
+@audita_acesso("ACESSO_EVOLUCAO", "paciente")
+def evolucao(request):
+    evolucoes = (
+        Evolucao.objects.filter(
+            paciente=request.paciente,
+            status=Evolucao.Status.LIBERADA,
+        )
+        .select_related("atendimento", "profissional")
+        .order_by("-created_at")
+    )
+    return render(request, "portal/evolucao.html", {"evolucoes": evolucoes})
+
 
 @portal_required
 def contato(request):
@@ -673,10 +687,18 @@ def treinos(request):
         {"prescricoes": prescricoes},
     )
 
-
 @portal_required
+@audita_acesso(
+    "ACESSO_TREINO", "prescricao",
+    por_sessao=False,
+    auditar_apos_view=True,
+)
 def treino_detalhe(request, uuid):
-    """Detalhe de uma prescrição — 404 uniforme se não for do paciente."""
+    """Detalhe de uma prescrição — 404 uniforme se não for do paciente.
+
+    Auditoria (§1.5): a prescrição expõe séries, cargas e progressão —
+    dado de saúde. O registro_id aponta para a PRESCRIÇÃO específica.
+    """
     prescricao = get_object_or_404(
         Prescricao.objects.filter(
             deleted_at__isnull=True,
@@ -685,6 +707,7 @@ def treino_detalhe(request, uuid):
         uuid=uuid,
         paciente=request.paciente,
     )
+    request.auditoria_registro_id = prescricao.pk
 
     # PrescricaoExercicio NÃO tem deleted_at — só o flag ativo.
     itens = (
